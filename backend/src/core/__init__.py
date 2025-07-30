@@ -1,0 +1,3 @@
+"""
+StackRadar  - Core Package
+"""
