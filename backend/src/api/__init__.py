@@ -1,3 +1,0 @@
-"""
-StackRadar  - API Package
-"""
