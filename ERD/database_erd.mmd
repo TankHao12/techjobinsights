@@ -1,0 +1,85 @@
+erDiagram
+    %% Tech Jobs Insights NZ - Database ERD (Updated Schema)
+    %% Simplified schema with JSONB skills storage
+    %% Last Updated: October 14, 2025
+    
+    %% Raw Data Layer - Source of Truth
+    raw_jobs {
+        int id PK "Primary Key"
+        text title "Job title from scraping"
+        text company "Company name (raw)"
+        text url UK "Unique job URL"
+        text full_description "Complete job description"
+        text location "Location string (raw, e.g. Auckland CBD, Auckland)"
+        text posting_date "Posting date text (unparsed)"
+        text search_term "Search term used to find job"
+        timestamp scraped_at "When job was scraped"
+        text processing_version "Version of processing pipeline"
+        boolean processed "Has been processed flag"
+        timestamp processed_at "When job was processed"
+    }
+    
+    %% Processed Data Layer - NLP Enhanced
+    jobs {
+        int id PK "Primary Key"
+        int raw_job_id FK "Link to raw job data"
+        int company_id FK "Normalized company"
+        int location_id FK "Normalized location"
+        int category_id FK "Job category"
+        text title "Cleaned job title"
+        text description "Processed description"
+        date posted_date "Parsed posting date (from raw_jobs.posting_date)"
+        timestamp scraped_at "Scraping timestamp"
+        boolean is_tech_job "Is this a tech job (default true)"
+        decimal tech_confidence_score "NLP confidence (0.00-1.00)"
+        enum employment_type "full_time | part_time | contract | internship | not_specified"
+        enum experience_level "entry | junior | mid | senior | lead | principal | executive | not_specified"
+        enum work_arrangement "remote | hybrid | onsite | flexible | not_specified"
+        jsonb extracted_skills "Skills extracted by NLP (categorized)"
+        int salary_min "Minimum salary"
+        int salary_max "Maximum salary"
+        text salary_currency "Currency code (default NZD)"
+        text salary_period "year | month | hour"
+        text salary_raw_text "Original salary text"
+        decimal salary_confidence_score "Salary extraction confidence"
+        timestamp processed_at "Processing timestamp"
+        text processing_version "Pipeline version"
+        boolean is_active "Soft delete flag"
+        text original_url "Original job URL"
+        text found_via_search_term "Discovery search term"
+    }
+    
+    %% Reference Table - Companies
+    companies {
+        int id PK "Primary Key"
+        text name "Company display name"
+        text normalized_name UK "Lowercase normalized name for deduplication"
+        timestamp created_at "Record creation time"
+    }
+    
+    %% Reference Table - Locations
+    locations {
+        int id PK "Primary Key"
+        text city "City name"
+        text region "State/Region/District"
+        text country "Country name (default New Zealand)"
+        int total_jobs "Job count cache for analytics"
+        int avg_salary "Average salary cache"
+        timestamp created_at "Record creation time"
+    }
+    
+    %% Reference Table - Categories
+    categories {
+        int id PK "Primary Key"
+        text name UK "Category name (e.g. Software Development)"
+        text description "Category description"
+        text color_code "UI color hex code (e.g. #3B82F6)"
+        int sort_order "Display sort order (default 0)"
+        timestamp created_at "Record creation time"
+    }
+    
+    %% Relationships
+    raw_jobs ||--o{ jobs : "processes into (1:N)"
+    jobs }o--|| companies : "belongs to (N:1)"
+    jobs }o--|| locations : "located in (N:1)"
+    jobs }o--|| categories : "categorized as (N:1)"
