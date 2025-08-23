@@ -1,0 +1,99 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:17-alpine
+    container_name: nz-tech-jobs-db
+    environment:
+      POSTGRES_DB: techjobs
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Note: Schema is now created via SQLAlchemy (see backend/init_database.py)
+      # No SQL init script needed - run: docker-compose exec backend python init_database.py --seed-data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # # Redis Cache
+  # redis:
+  #   image: redis:7.4-alpine
+  #   container_name: tech-jobs-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nz-tech-jobs-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@database:5432/techjobs
+      # - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    depends_on:
+      database:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+    restart: unless-stopped
+
+  # # Frontend Web App
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: tech-jobs-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8000
+  #     - CHOKIDAR_USEPOLLING=true
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+
+  # # pgAdmin Database Management
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: tech-jobs-pgadmin
+  #   ports:
+  #     - "8080:80"
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@example.com
+  #     - PGADMIN_DEFAULT_PASSWORD=admin
+  #     - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
+  #     - PGADMIN_CONFIG_LOGIN_BANNER="Tech Jobs Database Admin"
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  # redis_data:
+
+networks:
+  default:
+    name: tech-jobs-network
