@@ -27,6 +27,8 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
+        env:
+          VITE_API_URL: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
 
       - name: Build
         run: npm run build
@@ -42,6 +44,7 @@ jobs:
           app_location: "/frontend" # App source code path
           api_location: "" # API source code path - optional
           output_location: "dist" # Built app content directory - change to "build" if using CRA
+          skip_app_build: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
