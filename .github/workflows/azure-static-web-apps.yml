@@ -27,12 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
-        env:
-          VITE_API_URL: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
 
       - name: Build
         run: npm run build
         working-directory: ./frontend
+        env:
+          VITE_API_URL: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
 
       - name: Build And Deploy
         id: builddeploy
