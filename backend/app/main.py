@@ -83,7 +83,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # React development server
         "http://localhost:5173",  # Vite development server
-        "https://techjobs.nz",    # Production frontend (future)
+        "https://www.techjobinsights.me",  # Production frontend (Azure Static Web Apps)
+        "https://techjobinsights.me",      # Production frontend (without www)
     ],
     allow_credentials=True,
     allow_methods=["*"],
