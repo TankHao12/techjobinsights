@@ -12,33 +12,25 @@ from app.database import get_db
 from app import crud
 from app import schemas
 from app import models
+from app.utils.cache import cached_query
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 # ============================================================================
-# SKILLS ANALYTICS ENDPOINTS
+# CACHED HELPER FUNCTIONS FOR ANALYTICS
 # ============================================================================
 
-@router.get("/skills/popular")
-async def get_popular_skills(
-    category: Optional[str] = Query(None, description="Skill category filter (programming_languages, web_frameworks, etc.)"),
-    limit: int = Query(20, ge=1, le=100, description="Maximum number of skills to return"),
-    db: Session = Depends(get_db)
-):
+@cached_query(ttl=600)  # Cache for 10 minutes
+def _get_popular_skills_cached(category: Optional[str], limit: int) -> List[dict]:
     """
-    Get most popular skills across all jobs with percentages.
-    
-    Args:
-        category: Optional skill category filter
-        limit: Maximum number of skills to return
-        
-    Returns:
-        List of skills with job counts, percentages, and display names
+    Internal cached function for popular skills query.
+    Separated from endpoint to enable caching with TTL.
     """
     from sqlalchemy import text
+    from app.database import SessionLocal
     from app.processors.nlp_engine import NLPEngine
     
-    # Initialize NLP engine for display name mapping
+    db = SessionLocal()
     nlp_engine = NLPEngine()
     
     try:
@@ -75,15 +67,42 @@ async def get_popular_skills(
         
         return [
             {
-                "name": row.skill,  # Internal name (lowercase)
-                "display_name": nlp_engine.get_display_name(row.skill),  # Proper formatting
-                "category": nlp_engine.get_skill_category(row.skill),  # Skill category
+                "name": row.skill,
+                "display_name": nlp_engine.get_display_name(row.skill),
+                "category": nlp_engine.get_skill_category(row.skill),
                 "job_count": row.job_count,
                 "percentage": float(row.percentage)
             }
             for row in result
         ]
+    finally:
+        db.close()
+
+
+# ============================================================================
+# SKILLS ANALYTICS ENDPOINTS
+# ============================================================================
+
+@router.get("/skills/popular")
+async def get_popular_skills(
+    category: Optional[str] = Query(None, description="Skill category filter (programming_languages, web_frameworks, etc.)"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of skills to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get most popular skills across all jobs with percentages.
+    
+    Uses 10-minute cache to improve performance for repeated requests.
+    
+    Args:
+        category: Optional skill category filter
+        limit: Maximum number of skills to return
         
+    Returns:
+        List of skills with job counts, percentages, and display names
+    """
+    try:
+        return _get_popular_skills_cached(category, limit)
     except Exception as e:
         from app.core.logging import get_logger
         logger = get_logger(__name__)
