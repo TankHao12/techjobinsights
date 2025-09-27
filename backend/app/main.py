@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import logging
 from contextlib import asynccontextmanager
+import os
 
 # Import our modules
 from app.database import get_db, test_connection
@@ -78,14 +79,31 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend access
+# Allow configuring allowed origins via environment variable ALLOWED_ORIGINS
+# Format: comma-separated list of origins. Use "*" to allow all (for testing only).
+default_origins = [
+    "http://localhost:3000",  # React development server
+    "http://localhost:5173",  # Vite development server
+    "https://www.techjobinsights.me",  # Production frontend (custom domain)
+    "https://techjobinsights.me",      # Production frontend (without www)
+]
+
+env_allowed = os.getenv("ALLOWED_ORIGINS", "").strip()
+if env_allowed:
+    if env_allowed == "*":
+        allow_origins = ["*"]
+    else:
+        # split on comma and strip whitespace
+        additional_origins = [o.strip() for o in env_allowed.split(",") if o.strip()]
+        allow_origins = default_origins + additional_origins
+else:
+    allow_origins = default_origins
+
+logger.info(f"CORS allowed origins: {allow_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React development server
-        "http://localhost:5173",  # Vite development server
-        "https://www.techjobinsights.me",  # Production frontend (Azure Static Web Apps)
-        "https://techjobinsights.me",      # Production frontend (without www)
-    ],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

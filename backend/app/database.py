@@ -36,6 +36,22 @@ DATABASE_URL = os.getenv(
     "postgresql://postgres:password@database:5432/techjobs"
 )
 
+# Connection arguments for psycopg2 to help with IPv6/IPv4 issues
+# This is particularly important for Azure App Service which doesn't support IPv6 outbound
+connect_args = {}
+if "supabase" in DATABASE_URL.lower():
+    # For Supabase connections, ensure SSL and set timeout
+    connect_args = {
+        "sslmode": "require",
+        "connect_timeout": 10,
+        # Note: keepalives help maintain connection through Azure's network
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+    }
+    logger.info("Configuring Supabase connection with SSL and keepalives")
+
 # Create SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL,
@@ -43,7 +59,8 @@ engine = create_engine(
     pool_pre_ping=True,  # Verify connections before use
     pool_recycle=300,    # Recycle connections every 5 minutes
     pool_size=10,        # Connection pool size
-    max_overflow=20      # Additional connections beyond pool_size
+    max_overflow=20,     # Additional connections beyond pool_size
+    connect_args=connect_args  # Pass connection arguments to psycopg2
 )
 
 # Create SessionLocal class
