@@ -20,11 +20,11 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy model using pip (compatible with spaCy 3.8.7)
-RUN python -m spacy download en_core_web_sm
-
 # Copy application code
 COPY . .
+
+# Verify app directory exists
+RUN ls -la /app && ls -la /app/app && echo "App directory verified successfully"
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app
@@ -35,4 +35,5 @@ USER app
 EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Note: --reload is removed for production (causes issues with multiprocessing in containers)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
