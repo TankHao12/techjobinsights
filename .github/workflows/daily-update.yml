@@ -38,7 +38,7 @@ jobs:
             .github
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
@@ -241,7 +241,7 @@ jobs:
       
       - name: Upload logs as artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: daily-update-logs
           path: |
@@ -292,7 +292,7 @@ jobs:
     
     steps:
       - name: Delete old artifacts
-        uses: c-hive/gha-remove-artifacts@v1
+        uses: c-hive/gha-remove-artifacts@v1.4.0
         with:
           age: '30 days'
           skip-recent: 5  # Keep the 5 most recent runs
