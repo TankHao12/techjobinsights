@@ -71,6 +71,17 @@
 -   **Database Versioning**: Alembic migrations
 -   **Development**: Hot reload (Vite + Uvicorn)
 -   **API Documentation**: OpenAPI/Swagger (auto-generated)
+-   **Deployment**: Azure Web App Service, Azure Static Web Apps, Supabase
+-   **Automation**: GitHub Actions for daily data updates
+
+### Automation
+
+-   **Daily Updates**: Automated job scraping and processing at 2 AM NZDT
+-   **Workflow**: GitHub Actions orchestrating API calls
+-   **Monitoring**: Comprehensive logging and status tracking
+-   **Cost**: $0 additional infrastructure (uses GitHub Actions free tier)
+
+> See [AUTOMATION_SUMMARY.md](AUTOMATION_SUMMARY.md) for complete automation documentation
 
 ## Quick Start Guide
 

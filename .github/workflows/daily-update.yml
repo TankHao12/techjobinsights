@@ -1,0 +1,300 @@
+name: Daily Job Data Update
+
+on:
+  # Scheduled to run daily at 2 AM NZDT (1 PM UTC during NZDT, 2 PM UTC during NZST)
+  # Using 13:00 UTC which is 2 AM NZDT (UTC+13)
+  schedule:
+    - cron: '0 13 * * *'  # 2 AM NZDT / 3 AM NZST
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      pages_per_term:
+        description: 'Number of pages to scrape per search term'
+        required: false
+        default: '3'
+        type: number
+      url_check_days:
+        description: 'Check URLs for jobs older than N days'
+        required: false
+        default: '7'
+        type: number
+
+env:
+  BACKEND_URL: https://techjobsinsights-api.azurewebsites.net
+  LOG_RETENTION_DAYS: 30
+
+jobs:
+  daily-update:
+    name: Run Daily Data Update
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # 1 hour timeout
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests
+      
+      - name: Get current timestamp
+        id: timestamp
+        run: |
+          echo "datetime=$(TZ=Pacific/Auckland date +'%Y-%m-%d %H:%M:%S %Z')" >> $GITHUB_OUTPUT
+          echo "logfile=daily_update_$(date +'%Y%m%d_%H%M%S').log" >> $GITHUB_OUTPUT
+      
+      - name: Start logging
+        run: |
+          echo "=========================================="
+          echo "DAILY UPDATE - ${{ steps.timestamp.outputs.datetime }}"
+          echo "=========================================="
+          echo ""
+          echo "Backend URL: $BACKEND_URL"
+          echo "Pages per term: ${{ github.event.inputs.pages_per_term || '3' }}"
+          echo "URL check days: ${{ github.event.inputs.url_check_days || '7' }}"
+          echo ""
+      
+      - name: Check backend health
+        id: health_check
+        run: |
+          echo "Checking backend health..."
+          response=$(curl -s -w "\n%{http_code}" "$BACKEND_URL/health" || echo "000")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "HTTP Status: $http_code"
+          echo "$body" | jq '.' || echo "$body"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Backend health check failed with status $http_code"
+            exit 1
+          fi
+          
+          echo "Backend is healthy"
+          echo ""
+      
+      - name: Get operations status (before)
+        id: status_before
+        run: |
+          echo "Getting operations status before update..."
+          response=$(curl -s "$BACKEND_URL/api/v1/operations/status")
+          echo "$response" | jq '.'
+          echo ""
+        continue-on-error: true
+      
+      - name: Run daily update operation
+        id: daily_update
+        run: |
+          echo "=========================================="
+          echo "STARTING DAILY UPDATE OPERATION"
+          echo "=========================================="
+          echo ""
+          
+          PAGES="${{ github.event.inputs.pages_per_term || '3' }}"
+          URL_DAYS="${{ github.event.inputs.url_check_days || '7' }}"
+          
+          echo "Calling daily update endpoint..."
+          echo "URL: $BACKEND_URL/api/v1/operations/daily-update?pages_per_term=$PAGES&url_check_older_than=$URL_DAYS"
+          echo ""
+          
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "$BACKEND_URL/api/v1/operations/daily-update?pages_per_term=$PAGES&url_check_older_than=$URL_DAYS" \
+            -H "Content-Type: application/json")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "HTTP Status: $http_code"
+          echo ""
+          echo "Response:"
+          echo "$body" | jq '.' || echo "$body"
+          echo ""
+          
+          # Save response for later steps
+          echo "$body" > daily_update_response.json
+          
+          # Check if operation succeeded
+          success=$(echo "$body" | jq -r '.success // false')
+          
+          if [ "$http_code" != "200" ] || [ "$success" != "true" ]; then
+            echo "::warning::Daily update completed with errors"
+            exit 1
+          fi
+          
+          echo "Daily update completed successfully"
+      
+      - name: Parse update results
+        if: always() && steps.daily_update.outcome != 'skipped'
+        run: |
+          if [ -f daily_update_response.json ]; then
+            echo "=========================================="
+            echo "UPDATE RESULTS SUMMARY"
+            echo "=========================================="
+            echo ""
+            
+            # Extract key metrics
+            echo "Scraping Results:"
+            jq -r '.data.steps[] | select(.name=="scraping") | "  New jobs saved: \(.data.total_saved // "N/A")\n  Duplicates skipped: \(.data.duplicates_skipped // "N/A")"' daily_update_response.json || echo "  No data available"
+            echo ""
+            
+            echo "NLP Processing Results:"
+            jq -r '.data.steps[] | select(.name=="nlp_processing") | "  Jobs processed: \(.data.processed // "N/A")/\(.data.total // "N/A")\n  Tech jobs found: \(.data.tech_jobs_found // "N/A")\n  Avg time per job: \(.data.avg_processing_time // "N/A")s"' daily_update_response.json || echo "  No data available"
+            echo ""
+            
+            echo "URL Checking Results:"
+            jq -r '.data.steps[] | select(.name=="url_checking") | "  URLs checked: \(.data.checked // "N/A")\n  Marked inactive: \(.data.marked_inactive // "N/A")\n  Kept active: \(.data.kept_active // "N/A")"' daily_update_response.json || echo "  No data available"
+            echo ""
+            
+            # Check for errors
+            errors=$(jq -r '[.data.steps[].errors // [] | select(. != null)] | flatten | length' daily_update_response.json 2>/dev/null || echo "0")
+            if [ "$errors" -gt 0 ]; then
+              echo "::warning::$errors error(s) encountered during update"
+              echo ""
+              echo "Errors:"
+              jq -r '.data.steps[] | select(.errors != null) | "  [\(.name)]: \(.errors[0] // "Unknown error")"' daily_update_response.json
+            fi
+          fi
+      
+      - name: Get operations status (after)
+        id: status_after
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "OPERATIONS STATUS (AFTER UPDATE)"
+          echo "=========================================="
+          echo ""
+          response=$(curl -s "$BACKEND_URL/api/v1/operations/status")
+          echo "$response" | jq '.'
+          echo ""
+        continue-on-error: true
+      
+      - name: Run data verification
+        id: verification
+        if: always() && steps.daily_update.outcome != 'skipped'
+        run: |
+          echo "=========================================="
+          echo "DATA QUALITY VERIFICATION"
+          echo "=========================================="
+          echo ""
+          
+          response=$(curl -s "$BACKEND_URL/api/v1/operations/verify-data")
+          echo "$response" | jq '.'
+          
+          # Check verification success
+          success=$(echo "$response" | jq -r '.success // false')
+          if [ "$success" != "true" ]; then
+            echo "::warning::Data verification completed with warnings"
+          fi
+          
+          echo ""
+        continue-on-error: true
+      
+      - name: Create detailed log file
+        if: always()
+        run: |
+          LOG_FILE="${{ steps.timestamp.outputs.logfile }}"
+          
+          {
+            echo "=========================================="
+            echo "DAILY UPDATE LOG"
+            echo "=========================================="
+            echo "Timestamp: ${{ steps.timestamp.outputs.datetime }}"
+            echo "Workflow Run: ${{ github.run_number }}"
+            echo "Backend URL: $BACKEND_URL"
+            echo ""
+            echo "CONFIGURATION:"
+            echo "  Pages per term: ${{ github.event.inputs.pages_per_term || '3' }}"
+            echo "  URL check days: ${{ github.event.inputs.url_check_days || '7' }}"
+            echo ""
+            
+            if [ -f daily_update_response.json ]; then
+              echo "FULL RESPONSE:"
+              jq '.' daily_update_response.json
+            fi
+            
+            echo ""
+            echo "STATUS:"
+            if [ "${{ steps.daily_update.outcome }}" == "success" ]; then
+              echo "  Daily update: SUCCESS"
+            else
+              echo "  Daily update: FAILED"
+            fi
+            
+            echo ""
+            echo "=========================================="
+            echo "END OF LOG"
+            echo "=========================================="
+          } > "$LOG_FILE"
+          
+          echo "Log file created: $LOG_FILE"
+      
+      - name: Upload logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: daily-update-logs
+          path: |
+            daily_update_*.log
+            daily_update_response.json
+          retention-days: 30
+      
+      - name: Final summary
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "WORKFLOW SUMMARY"
+          echo "=========================================="
+          echo "Health Check: ${{ steps.health_check.outcome }}"
+          echo "Daily Update: ${{ steps.daily_update.outcome }}"
+          echo "Verification: ${{ steps.verification.outcome }}"
+          echo ""
+          
+          if [ "${{ steps.daily_update.outcome }}" == "success" ]; then
+            echo "Daily update completed successfully!"
+            echo ""
+            echo "View detailed logs in the workflow artifacts."
+          else
+            echo "::error::Daily update failed. Please check the logs."
+            exit 1
+          fi
+      
+      - name: Notify on failure (optional)
+        if: failure()
+        run: |
+          echo "::error::Daily update workflow failed"
+          echo "Timestamp: ${{ steps.timestamp.outputs.datetime }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo ""
+          echo "View logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Optional: Add notification integration here
+          # Examples: Send email, Slack, Discord, etc.
+          # For now, GitHub will send email notifications for failed scheduled workflows
+
+  # Optional: Add a job to clean up old logs
+  cleanup-old-logs:
+    name: Cleanup Old Logs
+    runs-on: ubuntu-latest
+    needs: daily-update
+    if: always()
+    
+    steps:
+      - name: Delete old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '30 days'
+          skip-recent: 5  # Keep the 5 most recent runs
+        continue-on-error: true
+

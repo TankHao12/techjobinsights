@@ -16,7 +16,7 @@ from sqlalchemy import text
 import app.schemas as schemas
 
 # Import routers
-from app.routers import jobs, companies, analytics, categories, skills
+from app.routers import jobs, companies, analytics, categories, skills, operations
 
 # Configure logging
 logging.basicConfig(
@@ -115,6 +115,7 @@ app.include_router(companies.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(categories.router, prefix="/api/v1")
 app.include_router(skills.router, prefix="/api/v1")
+app.include_router(operations.router, prefix="/api/v1")
 
 # Root endpoints
 @app.get("/", response_model=schemas.APIResponse)
@@ -138,7 +139,8 @@ async def root():
                 "skills": "/api/v1/skills", 
                 "companies": "/api/v1/companies",
                 "analytics": "/api/v1/analytics",
-                "categories": "/api/v1/categories"
+                "categories": "/api/v1/categories",
+                "operations": "/api/v1/operations"
             }
         }
     )
