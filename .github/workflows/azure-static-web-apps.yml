@@ -25,10 +25,8 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        run: npm ci
         working-directory: ./frontend
-        run: |
-          npm cache clean --force
-          npm ci --include=optional
 
       - name: Build
         run: npm run build
