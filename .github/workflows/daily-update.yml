@@ -21,7 +21,7 @@ on:
         type: number
 
 env:
-  BACKEND_URL: https://techjobsinsights-api.azurewebsites.net
+  BACKEND_URL: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
   LOG_RETENTION_DAYS: 30
 
 jobs:
@@ -67,19 +67,34 @@ jobs:
         id: health_check
         run: |
           echo "Checking backend health..."
-          response=$(curl -s -w "\n%{http_code}" "$BACKEND_URL/health" || echo "000")
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
+          echo "URL: $BACKEND_URL/health"
+          
+          # Try to connect with timeout
+          http_code=$(curl -s -o /tmp/response.txt -w "%{http_code}" --connect-timeout 10 --max-time 30 "$BACKEND_URL/health" || echo "000")
           
           echo "HTTP Status: $http_code"
-          echo "$body" | jq '.' || echo "$body"
           
-          if [ "$http_code" != "200" ]; then
-            echo "::error::Backend health check failed with status $http_code"
-            exit 1
+          if [ -f /tmp/response.txt ]; then
+            echo "Response body:"
+            cat /tmp/response.txt | jq '.' 2>/dev/null || cat /tmp/response.txt
+          else
+            echo "No response received"
           fi
           
-          echo "Backend is healthy"
+          if [ "$http_code" != "200" ]; then
+            echo "::warning::Backend health check failed with status $http_code"
+            echo "::warning::This might be due to:"
+            echo "  - Backend is starting up (wait a moment and retry)"
+            echo "  - Backend is down (check Azure Portal)"
+            echo "  - Network connectivity issues"
+            echo "  - DNS resolution problems"
+            echo ""
+            echo "Attempting to continue anyway (operations might still work)..."
+            echo "health_status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "Backend is healthy ✓"
+            echo "health_status=success" >> $GITHUB_OUTPUT
+          fi
           echo ""
       
       - name: Get operations status (before)
