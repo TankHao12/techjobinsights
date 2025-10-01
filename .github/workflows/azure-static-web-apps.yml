@@ -26,7 +26,9 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          npm ci
+          npm install @rollup/rollup-linux-x64-gnu --save-optional --no-save
 
       - name: Build
         run: npm run build
