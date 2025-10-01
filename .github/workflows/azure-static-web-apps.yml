@@ -26,9 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: |
-          npm cache clean --force
-          npm ci --include=optional
+        run: npm ci
 
       - name: Build
         run: npm run build
