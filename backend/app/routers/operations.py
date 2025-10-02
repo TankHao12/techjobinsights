@@ -118,7 +118,8 @@ class IncrementalScraperWrapper:
 @router.post("/scrape", response_model=OperationResponse)
 async def run_incremental_scrape(
     request: ScrapeRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    async_mode: bool = Query(default=False, description="Run in background mode (returns immediately)")
 ) -> OperationResponse:
     """
     Run incremental job scraping operation
@@ -129,32 +130,60 @@ async def run_incremental_scrape(
     Args:
         request: Scraping parameters
         background_tasks: FastAPI background tasks
+        async_mode: If True, runs in background and returns immediately
         
     Returns:
-        OperationResponse with scraping statistics
+        OperationResponse with scraping statistics (or status if async)
         
     Example:
-        POST /api/v1/operations/scrape
+        POST /api/v1/operations/scrape?async_mode=true
         {
             "pages_per_term": 3,
             "stop_on_old_jobs": true
         }
     """
     try:
-        logger.info(f"Scrape operation requested: pages={request.pages_per_term}")
+        logger.info(f"Scrape operation requested: pages={request.pages_per_term}, async={async_mode}")
         
-        scraper_wrapper = IncrementalScraperWrapper()
-        stats = scraper_wrapper.run_scrape(
-            pages=request.pages_per_term,
-            search_terms=request.search_terms,
-            stop_on_old_jobs=request.stop_on_old_jobs
-        )
-        
-        return OperationResponse(
-            success=True,
-            message=f"Scraping completed: {stats['total_saved']} new jobs saved",
-            data=stats
-        )
+        if async_mode:
+            # Run in background, return immediately
+            def scrape_in_background():
+                try:
+                    scraper_wrapper = IncrementalScraperWrapper()
+                    stats = scraper_wrapper.run_scrape(
+                        pages=request.pages_per_term,
+                        search_terms=request.search_terms,
+                        stop_on_old_jobs=request.stop_on_old_jobs
+                    )
+                    logger.info(f"Background scraping completed: {stats['total_saved']} new jobs")
+                except Exception as e:
+                    logger.error(f"Background scraping failed: {e}", exc_info=True)
+            
+            background_tasks.add_task(scrape_in_background)
+            
+            return OperationResponse(
+                success=True,
+                message="Scraping started in background",
+                data={
+                    "status": "processing",
+                    "pages_per_term": request.pages_per_term,
+                    "note": "Check logs or status endpoint for completion"
+                }
+            )
+        else:
+            # Run synchronously (original behavior)
+            scraper_wrapper = IncrementalScraperWrapper()
+            stats = scraper_wrapper.run_scrape(
+                pages=request.pages_per_term,
+                search_terms=request.search_terms,
+                stop_on_old_jobs=request.stop_on_old_jobs
+            )
+            
+            return OperationResponse(
+                success=True,
+                message=f"Scraping completed: {stats['total_saved']} new jobs saved",
+                data=stats
+            )
         
     except Exception as e:
         logger.error(f"Scrape operation failed: {e}", exc_info=True)

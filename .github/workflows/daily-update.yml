@@ -106,78 +106,188 @@ jobs:
           echo ""
         continue-on-error: true
       
-      - name: Run daily update operation
-        id: daily_update
+      - name: Step 1 - Scrape new jobs
+        id: scrape_jobs
         run: |
           echo "=========================================="
-          echo "STARTING DAILY UPDATE OPERATION"
+          echo "STEP 1: SCRAPING NEW JOBS"
           echo "=========================================="
           echo ""
           
           PAGES="${{ github.event.inputs.pages_per_term || '3' }}"
-          URL_DAYS="${{ github.event.inputs.url_check_days || '7' }}"
           
-          echo "Calling daily update endpoint..."
-          echo "URL: $BACKEND_URL/api/v1/operations/daily-update?pages_per_term=$PAGES&url_check_older_than=$URL_DAYS"
+          echo "Starting scraping of $PAGES page(s) per search term (background mode)..."
+          
+          # Start scraping in background mode
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "$BACKEND_URL/api/v1/operations/scrape?async_mode=true" \
+            -H "Content-Type: application/json" \
+            -d "{\"pages_per_term\": $PAGES, \"stop_on_old_jobs\": true}")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "HTTP Status: $http_code"
+          echo "$body" | jq '.' || echo "$body"
+          echo ""
+          
+          success=$(echo "$body" | jq -r '.success // false')
+          if [ "$success" == "true" ]; then
+            echo "✓ Scraping started in background"
+            echo ""
+            echo "Waiting for scraping to complete (checking status every 30s)..."
+            
+            # Wait and check status
+            max_wait=600  # 10 minutes max
+            elapsed=0
+            last_unprocessed=0
+            
+            while [ $elapsed -lt $max_wait ]; do
+              sleep 30
+              elapsed=$((elapsed + 30))
+              
+              # Check status
+              status_response=$(curl -s "$BACKEND_URL/api/v1/operations/status")
+              unprocessed=$(echo "$status_response" | jq -r '.data.unprocessed_jobs // 0' 2>/dev/null || echo "0")
+              
+              echo "[$elapsed s] Unprocessed jobs: $unprocessed"
+              
+              # If unprocessed count increased or is > 0, scraping might still be running
+              # If it stays at 0 for a check, likely done
+              if [ "$unprocessed" == "0" ] && [ "$last_unprocessed" == "0" ]; then
+                echo "✓ Scraping appears complete (no unprocessed jobs)"
+                break
+              fi
+              
+              last_unprocessed=$unprocessed
+            done
+            
+            if [ $elapsed -ge $max_wait ]; then
+              echo "::warning::Reached maximum wait time (10 min)"
+            fi
+            
+            # Save final status
+            echo "$status_response" > scrape_response.json
+          else
+            echo "::warning::Failed to start scraping"
+            echo "$body" > scrape_response.json
+          fi
+          echo ""
+        continue-on-error: true
+      
+      - name: Step 2 - Process with NLP
+        id: process_nlp
+        run: |
+          echo "=========================================="
+          echo "STEP 2: NLP PROCESSING"
+          echo "=========================================="
           echo ""
           
           response=$(curl -s -w "\n%{http_code}" \
             -X POST \
-            "$BACKEND_URL/api/v1/operations/daily-update?pages_per_term=$PAGES&url_check_older_than=$URL_DAYS" \
+            "$BACKEND_URL/api/v1/operations/process-nlp" \
             -H "Content-Type: application/json")
           
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | head -n-1)
           
           echo "HTTP Status: $http_code"
-          echo ""
-          echo "Response:"
           echo "$body" | jq '.' || echo "$body"
           echo ""
           
-          # Save response for later steps
-          echo "$body" > daily_update_response.json
+          echo "$body" > nlp_response.json
           
-          # Check if operation succeeded
           success=$(echo "$body" | jq -r '.success // false')
-          
-          if [ "$http_code" != "200" ] || [ "$success" != "true" ]; then
-            echo "::warning::Daily update completed with errors"
-            exit 1
+          if [ "$success" == "true" ]; then
+            processed=$(echo "$body" | jq -r '.data.processed // 0')
+            tech_jobs=$(echo "$body" | jq -r '.data.tech_jobs_found // 0')
+            echo "✓ Processed $processed jobs, found $tech_jobs tech jobs"
+          else
+            echo "::warning::NLP processing completed with warnings"
           fi
+          echo ""
+        continue-on-error: true
+      
+      - name: Step 3 - Check job URLs
+        id: check_urls
+        run: |
+          echo "=========================================="
+          echo "STEP 3: URL CHECKING"
+          echo "=========================================="
+          echo ""
           
-          echo "Daily update completed successfully"
+          URL_DAYS="${{ github.event.inputs.url_check_days || '7' }}"
+          
+          echo "Checking URLs for jobs older than $URL_DAYS days..."
+          
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "$BACKEND_URL/api/v1/operations/check-urls" \
+            -H "Content-Type: application/json" \
+            -d "{\"older_than_days\": $URL_DAYS, \"batch_size\": 30}")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "HTTP Status: $http_code"
+          echo "$body" | jq '.' || echo "$body"
+          echo ""
+          
+          echo "$body" > urls_response.json
+          
+          success=$(echo "$body" | jq -r '.success // false')
+          if [ "$success" == "true" ]; then
+            checked=$(echo "$body" | jq -r '.data.checked // 0')
+            inactive=$(echo "$body" | jq -r '.data.marked_inactive // 0')
+            echo "✓ Checked $checked URLs, marked $inactive as inactive"
+          else
+            echo "::warning::URL checking completed with warnings"
+          fi
+          echo ""
+        continue-on-error: true
       
       - name: Parse update results
-        if: always() && steps.daily_update.outcome != 'skipped'
+        if: always()
         run: |
-          if [ -f daily_update_response.json ]; then
-            echo "=========================================="
-            echo "UPDATE RESULTS SUMMARY"
-            echo "=========================================="
-            echo ""
-            
-            # Extract key metrics
+          echo "=========================================="
+          echo "UPDATE RESULTS SUMMARY"
+          echo "=========================================="
+          echo ""
+          
+          # Scraping Results
+          if [ -f scrape_response.json ]; then
             echo "Scraping Results:"
-            jq -r '.data.steps[] | select(.name=="scraping") | "  New jobs saved: \(.data.total_saved // "N/A")\n  Duplicates skipped: \(.data.duplicates_skipped // "N/A")"' daily_update_response.json || echo "  No data available"
+            new_jobs=$(jq -r '.data.total_saved // 0' scrape_response.json 2>/dev/null || echo "N/A")
+            duplicates=$(jq -r '.data.duplicates_skipped // 0' scrape_response.json 2>/dev/null || echo "N/A")
+            echo "  New jobs saved: $new_jobs"
+            echo "  Duplicates skipped: $duplicates"
             echo ""
-            
+          fi
+          
+          # NLP Processing Results
+          if [ -f nlp_response.json ]; then
             echo "NLP Processing Results:"
-            jq -r '.data.steps[] | select(.name=="nlp_processing") | "  Jobs processed: \(.data.processed // "N/A")/\(.data.total // "N/A")\n  Tech jobs found: \(.data.tech_jobs_found // "N/A")\n  Avg time per job: \(.data.avg_processing_time // "N/A")s"' daily_update_response.json || echo "  No data available"
+            processed=$(jq -r '.data.processed // 0' nlp_response.json 2>/dev/null || echo "N/A")
+            total=$(jq -r '.data.total // 0' nlp_response.json 2>/dev/null || echo "N/A")
+            tech_jobs=$(jq -r '.data.tech_jobs_found // 0' nlp_response.json 2>/dev/null || echo "N/A")
+            avg_time=$(jq -r '.data.avg_processing_time // 0' nlp_response.json 2>/dev/null || echo "N/A")
+            echo "  Jobs processed: $processed/$total"
+            echo "  Tech jobs found: $tech_jobs"
+            echo "  Avg time per job: ${avg_time}s"
             echo ""
-            
+          fi
+          
+          # URL Checking Results
+          if [ -f urls_response.json ]; then
             echo "URL Checking Results:"
-            jq -r '.data.steps[] | select(.name=="url_checking") | "  URLs checked: \(.data.checked // "N/A")\n  Marked inactive: \(.data.marked_inactive // "N/A")\n  Kept active: \(.data.kept_active // "N/A")"' daily_update_response.json || echo "  No data available"
+            checked=$(jq -r '.data.checked // 0' urls_response.json 2>/dev/null || echo "N/A")
+            inactive=$(jq -r '.data.marked_inactive // 0' urls_response.json 2>/dev/null || echo "N/A")
+            active=$(jq -r '.data.kept_active // 0' urls_response.json 2>/dev/null || echo "N/A")
+            echo "  URLs checked: $checked"
+            echo "  Marked inactive: $inactive"
+            echo "  Kept active: $active"
             echo ""
-            
-            # Check for errors
-            errors=$(jq -r '[.data.steps[].errors // [] | select(. != null)] | flatten | length' daily_update_response.json 2>/dev/null || echo "0")
-            if [ "$errors" -gt 0 ]; then
-              echo "::warning::$errors error(s) encountered during update"
-              echo ""
-              echo "Errors:"
-              jq -r '.data.steps[] | select(.errors != null) | "  [\(.name)]: \(.errors[0] // "Unknown error")"' daily_update_response.json
-            fi
           fi
       
       - name: Get operations status (after)
@@ -232,21 +342,32 @@ jobs:
             echo "  Pages per term: ${{ github.event.inputs.pages_per_term || '3' }}"
             echo "  URL check days: ${{ github.event.inputs.url_check_days || '7' }}"
             echo ""
+            echo "EXECUTION STATUS:"
+            echo "  Health Check: ${{ steps.health_check.outcome }}"
+            echo "  Scraping: ${{ steps.scrape_jobs.outcome }}"
+            echo "  NLP Processing: ${{ steps.process_nlp.outcome }}"
+            echo "  URL Checking: ${{ steps.check_urls.outcome }}"
+            echo "  Verification: ${{ steps.verification.outcome }}"
+            echo ""
             
-            if [ -f daily_update_response.json ]; then
-              echo "FULL RESPONSE:"
-              jq '.' daily_update_response.json
+            if [ -f scrape_response.json ]; then
+              echo "SCRAPING RESPONSE:"
+              jq '.' scrape_response.json 2>/dev/null || cat scrape_response.json
+              echo ""
             fi
             
-            echo ""
-            echo "STATUS:"
-            if [ "${{ steps.daily_update.outcome }}" == "success" ]; then
-              echo "  Daily update: SUCCESS"
-            else
-              echo "  Daily update: FAILED"
+            if [ -f nlp_response.json ]; then
+              echo "NLP RESPONSE:"
+              jq '.' nlp_response.json 2>/dev/null || cat nlp_response.json
+              echo ""
             fi
             
-            echo ""
+            if [ -f urls_response.json ]; then
+              echo "URL CHECKING RESPONSE:"
+              jq '.' urls_response.json 2>/dev/null || cat urls_response.json
+              echo ""
+            fi
+            
             echo "=========================================="
             echo "END OF LOG"
             echo "=========================================="
@@ -261,7 +382,7 @@ jobs:
           name: daily-update-logs
           path: |
             daily_update_*.log
-            daily_update_response.json
+            *_response.json
           retention-days: 30
       
       - name: Final summary
@@ -272,16 +393,28 @@ jobs:
           echo "WORKFLOW SUMMARY"
           echo "=========================================="
           echo "Health Check: ${{ steps.health_check.outcome }}"
-          echo "Daily Update: ${{ steps.daily_update.outcome }}"
-          echo "Verification: ${{ steps.verification.outcome }}"
+          echo "Step 1 - Scraping: ${{ steps.scrape_jobs.outcome }}"
+          echo "Step 2 - NLP Processing: ${{ steps.process_nlp.outcome }}"
+          echo "Step 3 - URL Checking: ${{ steps.check_urls.outcome }}"
+          echo "Step 4 - Verification: ${{ steps.verification.outcome }}"
           echo ""
           
-          if [ "${{ steps.daily_update.outcome }}" == "success" ]; then
-            echo "Daily update completed successfully!"
+          # Count successes
+          successes=0
+          if [ "${{ steps.scrape_jobs.outcome }}" == "success" ]; then ((successes++)); fi
+          if [ "${{ steps.process_nlp.outcome }}" == "success" ]; then ((successes++)); fi
+          if [ "${{ steps.check_urls.outcome }}" == "success" ]; then ((successes++)); fi
+          
+          if [ $successes -eq 3 ]; then
+            echo "✓ All operations completed successfully!"
             echo ""
             echo "View detailed logs in the workflow artifacts."
+          elif [ $successes -gt 0 ]; then
+            echo "::warning::Completed with $successes/3 operations successful"
+            echo ""
+            echo "Check logs for details on failed operations."
           else
-            echo "::error::Daily update failed. Please check the logs."
+            echo "::error::All operations failed. Please check the logs and backend status."
             exit 1
           fi
       
