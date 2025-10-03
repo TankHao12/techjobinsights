@@ -80,12 +80,7 @@ def run_scraping_task(pages: int, search_terms: Optional[List[str]], stop_on_old
         Dictionary with scraping statistics
     """
     try:
-        # Import here to avoid module-level import issues
-        import sys
-        import os
-        backend_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        sys.path.insert(0, backend_path)
-        
+        # Import the scraper (database is now a proper Python package)
         from database.operations.incremental_scrape import IncrementalJobScraper
         
         logger.info(f"Starting incremental scrape: pages={pages}, terms={len(search_terms) if search_terms else 'all'}")
