@@ -66,53 +66,52 @@ class URLCheckRequest(BaseModel):
     limit: Optional[int] = Field(default=None, ge=1, description="Maximum number of jobs to check")
 
 
-# Helper class to wrap the incremental scraper functionality
-class IncrementalScraperWrapper:
-    """Wrapper around the incremental scraper for API usage"""
+# Helper function to run scraping
+def run_scraping_task(pages: int, search_terms: Optional[List[str]], stop_on_old_jobs: bool) -> Dict[str, Any]:
+    """
+    Run incremental scrape operation
     
-    def __init__(self):
-        """Initialize the scraper wrapper"""
-        from database.operations.incremental_scrape import IncrementalJobScraper
-        self.scraper = IncrementalJobScraper()
-    
-    def run_scrape(
-        self, 
-        pages: int = 3,
-        search_terms: Optional[List[str]] = None,
-        stop_on_old_jobs: bool = True
-    ) -> Dict[str, Any]:
-        """
-        Run incremental scrape operation
+    Args:
+        pages: Number of pages to scrape per term
+        search_terms: Optional list of search terms
+        stop_on_old_jobs: Whether to stop on old jobs
         
-        Args:
-            pages: Number of pages to scrape per term
-            search_terms: Optional list of search terms
-            stop_on_old_jobs: Whether to stop on old jobs
-            
-        Returns:
-            Dictionary with scraping statistics
-        """
+    Returns:
+        Dictionary with scraping statistics
+    """
+    try:
+        # Import here to avoid module-level import issues
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        sys.path.insert(0, backend_path)
+        
+        from database.operations.incremental_scrape import IncrementalJobScraper
+        
+        logger.info(f"Starting incremental scrape: pages={pages}, terms={len(search_terms) if search_terms else 'all'}")
+        
+        scraper = IncrementalJobScraper()
+        
         try:
-            logger.info(f"Starting incremental scrape: pages={pages}, terms={len(search_terms) if search_terms else 'all'}")
-            
-            self.scraper.run_incremental_scrape(
+            scraper.run_incremental_scrape(
                 search_terms=search_terms,
                 max_pages_per_term=pages,
                 stop_on_old_jobs=stop_on_old_jobs
             )
             
             return {
-                "total_collected": self.scraper.total_collected,
-                "total_saved": self.scraper.total_saved,
-                "duplicates_skipped": self.scraper.duplicates_skipped,
+                "total_collected": scraper.total_collected,
+                "total_saved": scraper.total_saved,
+                "duplicates_skipped": scraper.duplicates_skipped,
                 "pages_per_term": pages,
                 "search_terms_used": len(search_terms) if search_terms else "all"
             }
-        except Exception as e:
-            logger.error(f"Scraping failed: {e}", exc_info=True)
-            raise
         finally:
-            self.scraper.cleanup()
+            scraper.cleanup()
+            
+    except Exception as e:
+        logger.error(f"Scraping failed: {e}", exc_info=True)
+        raise
 
 
 @router.post("/scrape", response_model=OperationResponse)
@@ -149,8 +148,7 @@ async def run_incremental_scrape(
             # Run in background, return immediately
             def scrape_in_background():
                 try:
-                    scraper_wrapper = IncrementalScraperWrapper()
-                    stats = scraper_wrapper.run_scrape(
+                    stats = run_scraping_task(
                         pages=request.pages_per_term,
                         search_terms=request.search_terms,
                         stop_on_old_jobs=request.stop_on_old_jobs
@@ -172,8 +170,7 @@ async def run_incremental_scrape(
             )
         else:
             # Run synchronously (original behavior)
-            scraper_wrapper = IncrementalScraperWrapper()
-            stats = scraper_wrapper.run_scrape(
+            stats = run_scraping_task(
                 pages=request.pages_per_term,
                 search_terms=request.search_terms,
                 stop_on_old_jobs=request.stop_on_old_jobs
@@ -195,7 +192,10 @@ async def run_incremental_scrape(
 
 
 @router.post("/process-nlp", response_model=OperationResponse)
-async def run_nlp_pipeline() -> OperationResponse:
+async def run_nlp_pipeline(
+    background_tasks: BackgroundTasks,
+    async_mode: bool = Query(default=False, description="Run in background mode (returns immediately)")
+) -> OperationResponse:
     """
     Run NLP processing pipeline on unprocessed jobs
     
@@ -206,49 +206,82 @@ async def run_nlp_pipeline() -> OperationResponse:
     - Experience level
     - Work arrangement (remote/hybrid/onsite)
     
+    Args:
+        background_tasks: FastAPI background tasks
+        async_mode: If True, runs in background and returns immediately
+    
     Returns:
         OperationResponse with processing statistics
         
     Example:
-        POST /api/v1/operations/process-nlp
+        POST /api/v1/operations/process-nlp?async_mode=true
     """
     try:
-        logger.info("NLP pipeline operation requested")
+        logger.info(f"NLP pipeline operation requested, async={async_mode}")
         
-        pipeline = DataProcessingPipeline()
-        
-        # Get current status
-        status = pipeline.get_processing_status()
-        unprocessed_count = status['raw_jobs']['unprocessed']
-        
-        if unprocessed_count == 0:
+        if async_mode:
+            # Run in background
+            def nlp_in_background():
+                try:
+                    pipeline = DataProcessingPipeline()
+                    status = pipeline.get_processing_status()
+                    unprocessed_count = status['raw_jobs']['unprocessed']
+                    
+                    if unprocessed_count > 0:
+                        logger.info(f"Background NLP processing {unprocessed_count} jobs...")
+                        stats = pipeline.process_unprocessed_jobs()
+                        logger.info(f"Background NLP completed: {stats.processed_jobs} jobs processed")
+                    else:
+                        logger.info("No unprocessed jobs for NLP")
+                except Exception as e:
+                    logger.error(f"Background NLP failed: {e}", exc_info=True)
+            
+            background_tasks.add_task(nlp_in_background)
+            
             return OperationResponse(
                 success=True,
-                message="No unprocessed jobs to process",
+                message="NLP processing started in background",
                 data={
-                    "processed": 0,
-                    "total": 0,
-                    "tech_jobs_found": 0
+                    "status": "processing",
+                    "note": "Check logs or status endpoint for completion"
                 }
             )
-        
-        logger.info(f"Processing {unprocessed_count} unprocessed jobs...")
-        stats = pipeline.process_unprocessed_jobs()
-        
-        return OperationResponse(
-            success=True,
-            message=f"NLP processing completed: {stats.processed_jobs}/{stats.total_jobs} jobs processed",
-            data={
-                "processed": stats.processed_jobs,
-                "total": stats.total_jobs,
-                "tech_jobs_found": stats.tech_jobs_found,
-                "jobs_with_salary": stats.jobs_with_salary,
-                "jobs_with_skills": stats.jobs_with_skills,
-                "avg_processing_time": round(stats.avg_processing_time, 2),
-                "errors": len(stats.errors)
-            },
-            errors=stats.errors[:10] if stats.errors else None  # Include first 10 errors
-        )
+        else:
+            # Run synchronously
+            pipeline = DataProcessingPipeline()
+            
+            # Get current status
+            status = pipeline.get_processing_status()
+            unprocessed_count = status['raw_jobs']['unprocessed']
+            
+            if unprocessed_count == 0:
+                return OperationResponse(
+                    success=True,
+                    message="No unprocessed jobs to process",
+                    data={
+                        "processed": 0,
+                        "total": 0,
+                        "tech_jobs_found": 0
+                    }
+                )
+            
+            logger.info(f"Processing {unprocessed_count} unprocessed jobs...")
+            stats = pipeline.process_unprocessed_jobs()
+            
+            return OperationResponse(
+                success=True,
+                message=f"NLP processing completed: {stats.processed_jobs}/{stats.total_jobs} jobs processed",
+                data={
+                    "processed": stats.processed_jobs,
+                    "total": stats.total_jobs,
+                    "tech_jobs_found": stats.tech_jobs_found,
+                    "jobs_with_salary": stats.jobs_with_salary,
+                    "jobs_with_skills": stats.jobs_with_skills,
+                    "avg_processing_time": round(stats.avg_processing_time, 2),
+                    "errors": len(stats.errors)
+                },
+                errors=stats.errors[:10] if stats.errors else None
+            )
         
     except Exception as e:
         logger.error(f"NLP pipeline operation failed: {e}", exc_info=True)
@@ -260,7 +293,11 @@ async def run_nlp_pipeline() -> OperationResponse:
 
 
 @router.post("/check-urls", response_model=OperationResponse)
-async def check_job_urls(request: URLCheckRequest) -> OperationResponse:
+async def check_job_urls(
+    request: URLCheckRequest,
+    background_tasks: BackgroundTasks,
+    async_mode: bool = Query(default=False, description="Run in background mode (returns immediately)")
+) -> OperationResponse:
     """
     Check URLs for existing jobs and mark inactive ones
     
@@ -269,19 +306,98 @@ async def check_job_urls(request: URLCheckRequest) -> OperationResponse:
     
     Args:
         request: URL checking parameters
+        background_tasks: FastAPI background tasks
+        async_mode: If True, runs in background and returns immediately
         
     Returns:
         OperationResponse with URL checking statistics
         
     Example:
-        POST /api/v1/operations/check-urls
+        POST /api/v1/operations/check-urls?async_mode=true
         {
             "older_than_days": 7,
             "batch_size": 30
         }
     """
     try:
-        logger.info(f"URL check operation requested: older_than_days={request.older_than_days}")
+        logger.info(f"URL check operation requested: older_than_days={request.older_than_days}, async={async_mode}")
+        
+        if async_mode:
+            # Run in background
+            def url_check_in_background():
+                try:
+                    logger.info("Background URL checking started...")
+                    db = SessionLocal()
+                    url_checker = URLChecker(timeout=10, max_retries=2)
+                    
+                    try:
+                        # Find jobs to check
+                        cutoff_date = datetime.utcnow() - timedelta(days=request.older_than_days)
+                        query = db.query(Job.id, Job.original_url, Job.scraped_at).filter(
+                            Job.is_active == True,
+                            Job.original_url.isnot(None),
+                            Job.original_url != '',
+                            Job.scraped_at < cutoff_date
+                        ).order_by(Job.scraped_at.asc())
+                        
+                        if request.limit:
+                            query = query.limit(request.limit)
+                        
+                        jobs_to_check = [(r.id, r.original_url, r.scraped_at) for r in query.all()]
+                        
+                        if not jobs_to_check:
+                            logger.info("No jobs found to check")
+                            return
+                        
+                        logger.info(f"Checking {len(jobs_to_check)} job URLs...")
+                        
+                        checked = 0
+                        marked_inactive = 0
+                        
+                        # Process in batches
+                        for i in range(0, len(jobs_to_check), request.batch_size):
+                            batch = jobs_to_check[i:i + request.batch_size]
+                            
+                            for job_id, url, scraped_at in batch:
+                                try:
+                                    is_accessible, status_message, status_code = url_checker.check_url_accessibility(url)
+                                    checked += 1
+                                    
+                                    if not is_accessible:
+                                        job = db.query(Job).filter(Job.id == job_id).first()
+                                        if job:
+                                            job.is_active = False
+                                            marked_inactive += 1
+                                            logger.debug(f"Marked job {job_id} as inactive")
+                                
+                                except Exception as e:
+                                    logger.error(f"Error checking job {job_id}: {e}")
+                            
+                            db.commit()
+                        
+                        logger.info(f"Background URL checking completed: {checked} checked, {marked_inactive} marked inactive")
+                    
+                    finally:
+                        url_checker.close()
+                        db.close()
+                        
+                except Exception as e:
+                    logger.error(f"Background URL checking failed: {e}", exc_info=True)
+            
+            background_tasks.add_task(url_check_in_background)
+            
+            return OperationResponse(
+                success=True,
+                message="URL checking started in background",
+                data={
+                    "status": "processing",
+                    "older_than_days": request.older_than_days,
+                    "batch_size": request.batch_size,
+                    "note": "Check logs or status endpoint for completion"
+                }
+            )
+        
+        # Synchronous mode (existing code)
         
         db = SessionLocal()
         url_checker = URLChecker(timeout=10, max_retries=2)
