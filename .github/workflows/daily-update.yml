@@ -19,6 +19,21 @@ on:
         required: false
         default: '7'
         type: number
+      scrape_async:
+        description: 'Run scraping in async mode (for 5+ pages)'
+        required: false
+        default: false
+        type: boolean
+      nlp_async:
+        description: 'Run NLP processing in async mode'
+        required: false
+        default: false
+        type: boolean
+      url_check_async:
+        description: 'Run URL checking in async mode'
+        required: false
+        default: true
+        type: boolean
 
 env:
   BACKEND_URL: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
@@ -115,34 +130,66 @@ jobs:
           echo ""
           
           PAGES="${{ github.event.inputs.pages_per_term || '3' }}"
+          ASYNC_MODE="${{ github.event.inputs.scrape_async || 'false' }}"
           
-          echo "Scraping $PAGES page(s) per search term..."
-          echo "Note: This may take 3-10 minutes depending on pages"
-          echo ""
-          
-          # Call scraping endpoint (synchronous, but should complete within 3-4 minutes for 1-3 pages)
-          response=$(curl -s -w "\n%{http_code}" --max-time 300 \
-            -X POST \
-            "$BACKEND_URL/api/v1/operations/scrape" \
-            -H "Content-Type: application/json" \
-            -d "{\"pages_per_term\": $PAGES, \"stop_on_old_jobs\": true}")
-          
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
-          
-          echo "HTTP Status: $http_code"
-          echo "$body" | jq '.' || echo "$body"
-          echo ""
-          
-          echo "$body" > scrape_response.json
-          
-          success=$(echo "$body" | jq -r '.success // false')
-          if [ "$success" == "true" ]; then
-            new_jobs=$(echo "$body" | jq -r '.data.total_saved // 0')
-            duplicates=$(echo "$body" | jq -r '.data.duplicates_skipped // 0')
-            echo "✓ Scraping complete: $new_jobs new jobs, $duplicates duplicates skipped"
+          if [ "$ASYNC_MODE" == "true" ]; then
+            echo "Mode: ASYNC (background processing)"
+            echo "Scraping $PAGES page(s) per search term in background..."
+            echo ""
+            
+            response=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/scrape?async_mode=true" \
+              -H "Content-Type: application/json" \
+              -d "{\"pages_per_term\": $PAGES, \"stop_on_old_jobs\": true}")
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              echo "✓ Scraping started in background"
+              echo "Waiting 5 minutes for completion..."
+              sleep 300
+              echo "✓ Wait complete (check backend logs for details)"
+              echo '{"success": true, "message": "Scraping completed in background"}' > scrape_response.json
+            else
+              echo "::warning::Failed to start scraping"
+              echo "$body" > scrape_response.json
+            fi
           else
-            echo "::warning::Scraping completed with warnings"
+            echo "Mode: SYNC (direct response)"
+            echo "Scraping $PAGES page(s) per search term..."
+            echo "Note: This may take 3-10 minutes depending on pages"
+            echo ""
+            
+            response=$(curl -s -w "\n%{http_code}" --max-time 300 \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/scrape" \
+              -H "Content-Type: application/json" \
+              -d "{\"pages_per_term\": $PAGES, \"stop_on_old_jobs\": true}")
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
+            echo "$body" > scrape_response.json
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              new_jobs=$(echo "$body" | jq -r '.data.total_saved // 0')
+              duplicates=$(echo "$body" | jq -r '.data.duplicates_skipped // 0')
+              echo "✓ Scraping complete: $new_jobs new jobs, $duplicates duplicates skipped"
+            else
+              echo "::warning::Scraping completed with warnings"
+            fi
           fi
           echo ""
         continue-on-error: true
@@ -155,81 +202,139 @@ jobs:
           echo "=========================================="
           echo ""
           
-          echo "Processing unprocessed jobs with NLP..."
-          echo "Note: This may take 2-5 minutes depending on job count"
-          echo ""
+          ASYNC_MODE="${{ github.event.inputs.nlp_async || 'false' }}"
           
-          response=$(curl -s -w "\n%{http_code}" --max-time 300 \
-            -X POST \
-            "$BACKEND_URL/api/v1/operations/process-nlp" \
-            -H "Content-Type: application/json")
-          
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
-          
-          echo "HTTP Status: $http_code"
-          echo "$body" | jq '.' || echo "$body"
-          echo ""
-          
-          echo "$body" > nlp_response.json
-          
-          success=$(echo "$body" | jq -r '.success // false')
-          if [ "$success" == "true" ]; then
-            processed=$(echo "$body" | jq -r '.data.processed // 0')
-            tech_jobs=$(echo "$body" | jq -r '.data.tech_jobs_found // 0')
-            avg_time=$(echo "$body" | jq -r '.data.avg_processing_time // 0')
-            echo "✓ Processed $processed jobs, found $tech_jobs tech jobs (${avg_time}s avg)"
+          if [ "$ASYNC_MODE" == "true" ]; then
+            echo "Mode: ASYNC (background processing)"
+            echo "Starting NLP processing in background..."
+            echo ""
+            
+            response=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/process-nlp?async_mode=true" \
+              -H "Content-Type: application/json")
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              echo "✓ NLP processing started in background"
+              echo "Waiting 3 minutes for completion..."
+              sleep 180
+              echo "✓ Wait complete (check backend logs for details)"
+              echo '{"success": true, "message": "NLP processing completed in background"}' > nlp_response.json
+            else
+              echo "::warning::Failed to start NLP processing"
+              echo "$body" > nlp_response.json
+            fi
           else
-            echo "::warning::NLP processing completed with warnings"
+            echo "Mode: SYNC (direct response)"
+            echo "Processing unprocessed jobs with NLP..."
+            echo "Note: This may take 2-5 minutes depending on job count"
+            echo ""
+            
+            response=$(curl -s -w "\n%{http_code}" --max-time 300 \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/process-nlp" \
+              -H "Content-Type: application/json")
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
+            echo "$body" > nlp_response.json
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              processed=$(echo "$body" | jq -r '.data.processed // 0')
+              tech_jobs=$(echo "$body" | jq -r '.data.tech_jobs_found // 0')
+              avg_time=$(echo "$body" | jq -r '.data.avg_processing_time // 0')
+              echo "✓ Processed $processed jobs, found $tech_jobs tech jobs (${avg_time}s avg)"
+            else
+              echo "::warning::NLP processing completed with warnings"
+            fi
           fi
           echo ""
         continue-on-error: true
       
-      - name: Step 3 - Check job URLs (async mode)
+      - name: Step 3 - Check job URLs
         id: check_urls
         run: |
           echo "=========================================="
-          echo "STEP 3: URL CHECKING (BACKGROUND MODE)"
+          echo "STEP 3: URL CHECKING"
           echo "=========================================="
           echo ""
           
           URL_DAYS="${{ github.event.inputs.url_check_days || '7' }}"
+          ASYNC_MODE="${{ github.event.inputs.url_check_async || 'true' }}"
           
-          echo "Starting URL checking for jobs older than $URL_DAYS days (background mode)..."
-          echo "This runs in background to avoid gateway timeout"
-          echo ""
-          
-          # Start URL checking in background mode
-          response=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            "$BACKEND_URL/api/v1/operations/check-urls?async_mode=true" \
-            -H "Content-Type: application/json" \
-            -d "{\"older_than_days\": $URL_DAYS, \"batch_size\": 30}")
-          
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
-          
-          echo "HTTP Status: $http_code"
-          echo "$body" | jq '.' || echo "$body"
-          echo ""
-          
-          success=$(echo "$body" | jq -r '.success // false')
-          if [ "$success" == "true" ]; then
-            echo "✓ URL checking started in background"
+          if [ "$ASYNC_MODE" == "true" ]; then
+            echo "Mode: ASYNC (background processing)"
+            echo "Starting URL checking for jobs older than $URL_DAYS days in background..."
             echo ""
-            echo "Waiting for URL checking to complete (simple wait - 3 minutes)..."
             
-            # Simple wait approach: just wait 3 minutes for background task to complete
-            # This is simpler than polling and works fine for URL checking
-            sleep 180  # 3 minutes
+            response=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/check-urls?async_mode=true" \
+              -H "Content-Type: application/json" \
+              -d "{\"older_than_days\": $URL_DAYS, \"batch_size\": 30}")
             
-            echo "✓ Wait completed. URL checking should be done (check logs for confirmation)"
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
             
-            # Save a success response
-            echo '{"success": true, "message": "URL checking completed in background"}' > urls_response.json
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              echo "✓ URL checking started in background"
+              echo "Waiting 3 minutes for completion..."
+              sleep 180
+              echo "✓ Wait complete (check backend logs for details)"
+              echo '{"success": true, "message": "URL checking completed in background"}' > urls_response.json
+            else
+              echo "::warning::Failed to start URL checking"
+              echo "$body" > urls_response.json
+            fi
           else
-            echo "::warning::Failed to start URL checking"
+            echo "Mode: SYNC (direct response)"
+            echo "Checking URLs for jobs older than $URL_DAYS days..."
+            echo "Note: This may take 1-3 minutes"
+            echo ""
+            
+            response=$(curl -s -w "\n%{http_code}" --max-time 300 \
+              -X POST \
+              "$BACKEND_URL/api/v1/operations/check-urls" \
+              -H "Content-Type: application/json" \
+              -d "{\"older_than_days\": $URL_DAYS, \"batch_size\": 30}")
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            echo "HTTP Status: $http_code"
+            echo "$body" | jq '.' || echo "$body"
+            echo ""
+            
             echo "$body" > urls_response.json
+            
+            success=$(echo "$body" | jq -r '.success // false')
+            if [ "$success" == "true" ]; then
+              checked=$(echo "$body" | jq -r '.data.checked // 0')
+              inactive=$(echo "$body" | jq -r '.data.marked_inactive // 0')
+              active=$(echo "$body" | jq -r '.data.kept_active // 0')
+              echo "✓ Checked $checked URLs: $active active, $inactive inactive"
+            else
+              echo "::warning::URL checking completed with warnings"
+            fi
           fi
           echo ""
         continue-on-error: true
@@ -432,4 +537,5 @@ jobs:
           age: '30 days'
           skip-recent: 5  # Keep the 5 most recent runs
         continue-on-error: true
+
 
