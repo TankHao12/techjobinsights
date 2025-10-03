@@ -491,20 +491,27 @@ jobs:
           echo "Step 4 - Verification: ${{ steps.verification.outcome }}"
           echo ""
           
-          # Count successes
+          # Count successes (main operations)
           successes=0
+          total=3
+          
           if [ "${{ steps.scrape_jobs.outcome }}" == "success" ]; then ((successes++)); fi
           if [ "${{ steps.process_nlp.outcome }}" == "success" ]; then ((successes++)); fi
           if [ "${{ steps.check_urls.outcome }}" == "success" ]; then ((successes++)); fi
           
-          if [ $successes -eq 3 ]; then
+          echo "Main operations: $successes/$total successful"
+          echo ""
+          
+          if [ $successes -eq $total ]; then
             echo "✓ All operations completed successfully!"
             echo ""
             echo "View detailed logs in the workflow artifacts."
+            # Don't exit with error if all main operations succeeded
           elif [ $successes -gt 0 ]; then
-            echo "::warning::Completed with $successes/3 operations successful"
+            echo "::warning::Completed with $successes/$total operations successful"
             echo ""
             echo "Check logs for details on failed operations."
+            # Partial success - don't fail the workflow
           else
             echo "::error::All operations failed. Please check the logs and backend status."
             exit 1
