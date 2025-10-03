@@ -43,14 +43,11 @@ jobs:
   daily-update:
     name: Run Daily Data Update
     runs-on: ubuntu-latest
-    timeout-minutes: 60  # 1 hour timeout
+    timeout-minutes: 60
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            .github
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -60,6 +57,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install requests
+          apt-get update && apt-get install -y jq
       
       - name: Get current timestamp
         id: timestamp
@@ -398,7 +396,7 @@ jobs:
       
       - name: Run data verification
         id: verification
-        if: always() && steps.daily_update.outcome != 'skipped'
+        if: always()
         run: |
           echo "=========================================="
           echo "DATA QUALITY VERIFICATION"
@@ -495,9 +493,15 @@ jobs:
           successes=0
           total=3
           
-          if [ "${{ steps.scrape_jobs.outcome }}" == "success" ]; then ((successes++)); fi
-          if [ "${{ steps.process_nlp.outcome }}" == "success" ]; then ((successes++)); fi
-          if [ "${{ steps.check_urls.outcome }}" == "success" ]; then ((successes++)); fi
+          if [ "${{ steps.scrape_jobs.outcome }}" == "success" ]; then 
+            successes=$((successes + 1))
+          fi
+          if [ "${{ steps.process_nlp.outcome }}" == "success" ]; then 
+            successes=$((successes + 1))
+          fi
+          if [ "${{ steps.check_urls.outcome }}" == "success" ]; then 
+            successes=$((successes + 1))
+          fi
           
           echo "Main operations: $successes/$total successful"
           echo ""
@@ -506,15 +510,15 @@ jobs:
             echo "✓ All operations completed successfully!"
             echo ""
             echo "View detailed logs in the workflow artifacts."
-            # Don't exit with error if all main operations succeeded
+            exit 0  # Explicitly exit with success
           elif [ $successes -gt 0 ]; then
             echo "::warning::Completed with $successes/$total operations successful"
             echo ""
             echo "Check logs for details on failed operations."
-            # Partial success - don't fail the workflow
+            exit 0  # Partial success is still OK
           else
             echo "::error::All operations failed. Please check the logs and backend status."
-            exit 1
+            exit 1  # Only fail if ALL operations failed
           fi
       
       - name: Notify on failure (optional)
