@@ -100,16 +100,16 @@ function App() {
                     </main>
 
                     {/* Footer */}
-                    <footer className="mt-auto border-t border-gray-200 dark:border-gray-800 bg-gradient-to-r from-white/80 via-blue-50/50 to-purple-50/50 dark:from-gray-900/80 dark:via-gray-900/60 dark:to-gray-900/80 backdrop-blur-md">
+                    <footer className="mt-auto border-t border-gray-200 dark:border-gray-700 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
                         <div className="container mx-auto px-4 py-6 max-w-7xl">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="text-center md:text-left">
-                                    <p className="text-gray-800 dark:text-gray-200 font-semibold mb-1">NZ Tech Jobs Market Intelligence</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Data updated daily • Built for NZ tech professionals</p>
+                                    <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">NZ Tech Jobs Market Intelligence</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Data updated daily • Built for NZ tech professionals</p>
                                 </div>
                                 <div className="text-center md:text-right">
-                                    <p className="text-sm text-gray-500 dark:text-gray-500">MVP v1.0 • © 2025</p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">Empowering career decisions with data</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">MVP v1.0 • © 2025</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Empowering career decisions with data</p>
                                 </div>
                             </div>
                         </div>
