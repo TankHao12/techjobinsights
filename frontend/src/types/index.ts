@@ -306,6 +306,28 @@ export interface SkillPair {
 }
 
 // =============================================================================
+// TRACKED KEYWORDS AND SKILLS TAXONOMY TYPES
+// =============================================================================
+
+export interface TrackedSkill {
+  name: string;
+  display_name: string;
+}
+
+export interface SkillTaxonomyCategory {
+  display_name: string;
+  skills: TrackedSkill[];
+}
+
+export interface TrackedKeywordsData {
+  search_terms: string[];
+  skills_taxonomy: Record<string, SkillTaxonomyCategory>;
+  total_search_terms: number;
+  total_skill_categories: number;
+  total_skills: number;
+}
+
+// =============================================================================
 // SEARCH AND FILTER TYPES
 // =============================================================================
 

@@ -16,6 +16,7 @@ const SkillComparisonPage = React.lazy(() => import('./pages/SkillComparison'));
 import Companies from './pages/Companies';
 import CompanyDetail from './pages/CompanyDetail';
 import About from './pages/About';
+import TrackedKeywords from './pages/TrackedKeywords';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -90,6 +91,9 @@ function App() {
                             {/* Companies Routes */}
                             <Route path="/companies" element={<Companies />} />
                             <Route path="/companies/:companyId" element={<CompanyDetail />} />
+
+                            {/* Tracked Keywords */}
+                            <Route path="/tracked-keywords" element={<TrackedKeywords />} />
 
                             {/* About */}
                             <Route path="/about" element={<About />} />

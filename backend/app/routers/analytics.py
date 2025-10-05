@@ -614,6 +614,56 @@ async def get_location_statistics(db: Session = Depends(get_db)):
         for loc in location_stats
     ]
 
+@router.get("/tracked-keywords")
+async def get_tracked_keywords():
+    """
+    Get all search terms and skills taxonomy that the platform monitors.
+    
+    Returns:
+        Dictionary containing:
+        - search_terms: List of job search terms used by the scraper
+        - skills_taxonomy: Skills organized by category with display names
+    """
+    from app.scrapers.seek_scraper import SeekScraper
+    from app.processors.nlp_engine import NLPEngine
+    
+    try:
+        # Get search terms from scraper
+        scraper = SeekScraper()
+        search_terms = scraper.get_search_terms()
+        
+        # Get skills taxonomy from NLP engine
+        nlp_engine = NLPEngine()
+        
+        # Organize skills by category with display names
+        skills_taxonomy = {}
+        for category, skills in nlp_engine.tech_skills.items():
+            skills_taxonomy[category] = {
+                "display_name": category.replace('_', ' ').title(),
+                "skills": [
+                    {
+                        "name": skill,
+                        "display_name": nlp_engine.get_display_name(skill)
+                    }
+                    for skill in sorted(skills)
+                ]
+            }
+        
+        return {
+            "search_terms": search_terms,
+            "skills_taxonomy": skills_taxonomy,
+            "total_search_terms": len(search_terms),
+            "total_skill_categories": len(skills_taxonomy),
+            "total_skills": sum(len(cat["skills"]) for cat in skills_taxonomy.values())
+        }
+        
+    except Exception as e:
+        from app.core.logging import get_logger
+        from fastapi import HTTPException
+        logger = get_logger(__name__)
+        logger.error(f"Error fetching tracked keywords: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch tracked keywords")
+
 @router.get("/skill-categories")
 async def get_skill_category_statistics(db: Session = Depends(get_db)):
     """
