@@ -17,17 +17,18 @@ import type {
  * Get popular skills
  * 
  * @param limit Number of skills to return (default: 20)
- * @param days Time period in days
+ * @param days Time period in days (0 for all time)
  * @param category Optional skill category filter
  * @returns Array of popular skills with stats
  */
 export const getPopularSkills = async (
   limit: number = 20,
-  _days?: number,
+  days: number = 0,
   category?: SkillCategory
 ): Promise<SkillWithStats[]> => {
   const data = await api.get<any[]>('/analytics/skills/popular', {
     limit,
+    days,
     category,
   });
 
@@ -40,9 +41,9 @@ export const getPopularSkills = async (
     job_count: item.job_count,
     required_count: item.job_count,
     primary_count: item.job_count,
-    percentage: item.percentage,
+    percentage: item.job_percentage || item.percentage,  // Use job_percentage from backend
     skill_type: 'technical',
-    popularity_score: item.percentage,
+    popularity_score: item.job_percentage || item.percentage,
     growth_rate: undefined, // TODO: Add growth rate calculation
   }));
 };
@@ -50,11 +51,13 @@ export const getPopularSkills = async (
 /**
  * Get skills grouped by category
  * 
- * @param days Time period in days (default: 90)
+ * @param days Time period in days (0 for all time)
  * @returns Array of skill categories with their skills
  */
-export const getSkillsByCategory = async (_days: number = 90): Promise<SkillCategoryStats[]> => {
-  const data = await api.get<Record<string, any[]>>('/analytics/skills/by-category');
+export const getSkillsByCategory = async (days: number = 0): Promise<SkillCategoryStats[]> => {
+  const data = await api.get<Record<string, any[]>>('/analytics/skills/by-category', {
+    days,
+  });
 
   // Transform backend response to frontend format
   return Object.entries(data).map(([category, skills]) => ({
@@ -71,9 +74,10 @@ export const getSkillsByCategory = async (_days: number = 90): Promise<SkillCate
       job_count: skill.job_count,
       required_count: skill.job_count,
       primary_count: skill.job_count,
-      percentage: skill.percentage,
+      percentage: skill.job_percentage || skill.percentage,  // Use job_percentage
+      category_percentage: skill.category_percentage,  // Add category_percentage
       skill_type: 'technical',
-      popularity_score: skill.percentage,
+      popularity_score: skill.job_percentage || skill.percentage,
     })),
   }));
 };
@@ -153,6 +157,34 @@ export const searchSkills = async (
     query,
     category,
     limit,
+  });
+};
+
+/**
+ * Get skill recommendations based on known skills
+ * 
+ * @param knownSkills Array of skills you already know
+ * @param limit Number of recommendations (default: 10)
+ * @returns Recommended skills with relevance scores
+ */
+export const getSkillRecommendations = async (
+  knownSkills: string[],
+  limit: number = 10
+): Promise<{
+  known_skills: string[];
+  recommendations: Array<{
+    skill: string;
+    job_count: number;
+    relevance_score: number;
+    market_demand: number;
+    reason: string;
+  }>;
+  message?: string;
+}> => {
+  const skillsParam = knownSkills.join(',');
+  return api.get('/skills/recommendations', { 
+    known_skills: skillsParam,
+    limit 
   });
 };
 

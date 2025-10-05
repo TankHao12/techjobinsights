@@ -24,7 +24,7 @@ export const Navigation: React.FC<NavigationProps> = ({ theme, toggleTheme }) =>
 
     return (
         <nav className="glass-card rounded-none border-l-0 border-r-0 border-t-0 sticky top-0 z-50">
-            <div className="container mx-auto px-4">
+            <div className="container mx-auto px-4 max-w-7xl">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo and Brand */}
                     <Link to="/" className="flex items-center space-x-3">

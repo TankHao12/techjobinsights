@@ -531,32 +531,63 @@ def get_recent_jobs(db: Session, days: int = 7, limit: int = 50) -> List[models.
 # ANALYTICS CRUD OPERATIONS
 # =============================================================================
 
-def get_dashboard_stats(db: Session) -> Dict[str, Any]:
-    """Get dashboard statistics"""
+def get_dashboard_stats(db: Session, days: int = 0) -> Dict[str, Any]:
+    """
+    Get dashboard statistics
+    
+    Args:
+        days: Time period in days (0 for all time). Filters by job posted_date.
+    """
     today = date.today()
+    cutoff_date = None
+    if days > 0:
+        cutoff_date = today - timedelta(days=days)
     
     # BUSINESS LOGIC: Only count tech jobs in dashboard stats
-    total_jobs = db.query(models.Job).filter(models.Job.is_tech_job == True).count()
-    active_jobs = db.query(models.Job).filter(
+    # Filter by posted_date if days parameter is provided
+    job_query = db.query(models.Job).filter(models.Job.is_tech_job == True)
+    if cutoff_date:
+        job_query = job_query.filter(models.Job.posted_date >= cutoff_date)
+    
+    total_jobs = job_query.count()
+    
+    active_jobs_query = db.query(models.Job).filter(
         and_(models.Job.is_active == True, models.Job.is_tech_job == True)
-    ).count()
+    )
+    if cutoff_date:
+        active_jobs_query = active_jobs_query.filter(models.Job.posted_date >= cutoff_date)
+    
+    active_jobs = active_jobs_query.count()
+    
     total_companies = db.query(models.Company).count()
-    hiring_companies = db.query(models.Company).join(models.Job).filter(
+    
+    hiring_companies_query = db.query(models.Company).join(models.Job).filter(
         and_(models.Job.is_active == True, models.Job.is_tech_job == True)
-    ).distinct().count()
+    )
+    if cutoff_date:
+        hiring_companies_query = hiring_companies_query.filter(models.Job.posted_date >= cutoff_date)
+    
+    hiring_companies = hiring_companies_query.distinct().count()
+    
     # Note: Skills are stored in JSONB, no separate skills table
     total_skills = 0  # Could calculate from JSONB if needed
-    new_jobs_today = db.query(models.Job).filter(
-        and_(models.Job.posted_date == today, models.Job.is_tech_job == True)
-    ).count()
     
-    avg_salary_result = db.query(func.avg(models.Job.salary_max)).filter(
+    new_jobs_today_query = db.query(models.Job).filter(
+        and_(models.Job.posted_date == today, models.Job.is_tech_job == True)
+    )
+    new_jobs_today = new_jobs_today_query.count()
+    
+    avg_salary_query = db.query(func.avg(models.Job.salary_max)).filter(
         and_(
             models.Job.salary_max.isnot(None),
             models.Job.is_active == True,
             models.Job.is_tech_job == True
         )
-    ).scalar()
+    )
+    if cutoff_date:
+        avg_salary_query = avg_salary_query.filter(models.Job.posted_date >= cutoff_date)
+    
+    avg_salary_result = avg_salary_query.scalar()
     
     return {
         "total_jobs": total_jobs,

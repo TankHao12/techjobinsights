@@ -130,6 +130,7 @@ export interface SkillWithStats extends Skill {
   trend_percentage?: number;
   growth_rate?: number;
   percentage?: number;  // Percentage of total jobs
+  category_percentage?: number;  // Percentage within category
   rank?: number;  // Ranking position
 }
 

@@ -35,25 +35,25 @@ async def get_skill_pairs(
                 SELECT
                     s1.skill as skill1,
                     s2.skill as skill2,
-                    COUNT(*) as job_count
+                    COUNT(DISTINCT s1.id) as job_count
                 FROM (
-                    SELECT j.id, jsonb_array_elements_text(value) as skill
+                    SELECT DISTINCT j.id, jsonb_array_elements_text(value) as skill
                     FROM jobs j, jsonb_each(j.extracted_skills)
                     WHERE j.extracted_skills IS NOT NULL AND j.is_tech_job = TRUE
                 ) s1
                 JOIN (
-                    SELECT j.id, jsonb_array_elements_text(value) as skill
+                    SELECT DISTINCT j.id, jsonb_array_elements_text(value) as skill
                     FROM jobs j, jsonb_each(j.extracted_skills)
                     WHERE j.extracted_skills IS NOT NULL AND j.is_tech_job = TRUE
                 ) s2 ON s1.id = s2.id AND s1.skill < s2.skill
                 GROUP BY s1.skill, s2.skill
-                HAVING COUNT(*) > 5
+                HAVING COUNT(DISTINCT s1.id) > 5
             )
             SELECT
                 skill1,
                 skill2,
                 job_count,
-                ROUND(job_count * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+                ROUND(job_count * 100.0 / (SELECT COUNT(DISTINCT id) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
             FROM skill_pairs
             ORDER BY job_count DESC
             LIMIT :limit
@@ -100,10 +100,10 @@ async def compare_skills(
         for skill_name in skill_list:
             # Get basic skill metrics
             skill_query = text("""
-                SELECT skill, COUNT(*) as job_count,
-                       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+                SELECT skill, COUNT(DISTINCT job_id) as job_count,
+                       ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT COUNT(DISTINCT id) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
                 FROM (
-                    SELECT jsonb_array_elements_text(value) as skill
+                    SELECT id as job_id, jsonb_array_elements_text(value) as skill
                     FROM jobs, jsonb_each(extracted_skills)
                     WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
                 ) skills_data
@@ -309,148 +309,100 @@ async def get_skill_detail(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch skill details: {str(e)}")
 
-@router.get("/compare", response_model=List[schemas.SkillComparison])
-async def compare_skills(
-    skills: str = Query(..., description="Comma-separated skill names to compare"),
+@router.get("/recommendations")
+async def get_skill_recommendations(
+    known_skills: str = Query(..., description="Comma-separated list of skills you already know"),
+    limit: int = Query(10, ge=1, le=20, description="Maximum number of recommendations"),
     db: Session = Depends(get_db)
 ):
     """
-    Compare multiple skills side-by-side.
-
+    Get skill recommendations based on skills you already know.
+    
+    Returns skills that frequently appear together with your known skills,
+    helping you decide what to learn next to maximize job opportunities.
+    
     Args:
-        skills: Comma-separated list of skill names (2-3 skills)
-
+        known_skills: Comma-separated list of skills you know (e.g., "python,sql")
+        limit: Maximum number of recommendations to return
+        
     Returns:
-        Array of skill comparison data
+        List of recommended skills with relevance scores and job counts
     """
     try:
-        skill_list = [s.strip().lower() for s in skills.split(',')]
-
-        if len(skill_list) < 2 or len(skill_list) > 3:
-            raise HTTPException(status_code=400, detail="Please provide 2-3 skills to compare")
-
-        comparisons = []
-
-        for skill_name in skill_list:
-            # Get basic skill metrics
-            skill_query = text("""
-                SELECT skill, COUNT(*) as job_count,
-                       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
-                FROM (
-                    SELECT jsonb_array_elements_text(value) as skill
-                    FROM jobs, jsonb_each(extracted_skills)
-                    WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
-                ) skills_data
-                WHERE LOWER(skill) = :skill_name
-                GROUP BY skill
-            """)
-
-            result = db.execute(skill_query, {"skill_name": skill_name}).fetchone()
-
-            if result:
-                # Get company count
-                company_query = text("""
-                    SELECT COUNT(DISTINCT j.company_id) as company_count
-                    FROM jobs j
-                    WHERE j.extracted_skills IS NOT NULL
-                      AND j.is_tech_job = TRUE
-                      AND EXISTS (
-                          SELECT 1 FROM jsonb_each(j.extracted_skills)
-                          WHERE jsonb_array_elements_text(value)::text = :skill_name
-                      )
-                """)
-
-                company_result = db.execute(company_query, {"skill_name": result.skill}).fetchone()
-
-                comparisons.append({
-                    "skill": result.skill,
-                    "demand": result.job_count,
-                    "growth_rate": 12.5,  # TODO: Calculate actual growth
-                    "companies_using": company_result.company_count if company_result else 0,
-                    "percentage": float(result.percentage),
-                    "trend_data": [  # Mock trend data
-                        {"date": "2024-10-01", "count": max(1, result.job_count - 10)},
-                        {"date": "2024-11-01", "count": result.job_count},
-                        {"date": "2024-11-15", "count": result.job_count + 5},
-                    ]
-                })
-            else:
-                # Skill not found
-                comparisons.append({
-                    "skill": skill_name,
-                    "demand": 0,
-                    "growth_rate": 0.0,
-                    "companies_using": 0,
-                    "percentage": 0.0,
-                    "trend_data": []
-                })
-
-        return comparisons
-
+        skill_list = [s.strip().lower() for s in known_skills.split(',') if s.strip()]
+        
+        if not skill_list:
+            raise HTTPException(status_code=400, detail="Please provide at least one skill")
+        
+        # Find skills that frequently appear with the known skills
+        query = text("""
+            WITH user_skills AS (
+                SELECT unnest(ARRAY[:skills]) as known_skill
+            ),
+            jobs_with_user_skills AS (
+                -- Jobs that have at least one of the user's skills
+                SELECT DISTINCT j.id
+                FROM jobs j, jsonb_each(j.extracted_skills) skills
+                WHERE j.extracted_skills IS NOT NULL 
+                  AND j.is_tech_job = TRUE
+                  AND EXISTS (
+                      SELECT 1 FROM user_skills us
+                      WHERE LOWER(jsonb_array_elements_text(skills.value)::text) = LOWER(us.known_skill)
+                  )
+            ),
+            recommended_skills AS (
+                -- Find other skills in those jobs
+                SELECT 
+                    LOWER(jsonb_array_elements_text(skills.value)) as skill,
+                    COUNT(DISTINCT j.id) as jobs_with_skill,
+                    COUNT(DISTINCT j.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs_with_user_skills), 0) as relevance_score
+                FROM jobs j, jsonb_each(j.extracted_skills) skills
+                JOIN jobs_with_user_skills jwu ON j.id = jwu.id
+                WHERE j.extracted_skills IS NOT NULL
+                  AND j.is_tech_job = TRUE
+                  AND LOWER(jsonb_array_elements_text(skills.value)) NOT IN (
+                      SELECT LOWER(unnest(ARRAY[:skills]))
+                  )
+                GROUP BY LOWER(jsonb_array_elements_text(skills.value))
+                HAVING COUNT(DISTINCT j.id) > 5
+            )
+            SELECT 
+                skill,
+                jobs_with_skill as job_count,
+                ROUND(relevance_score::numeric, 1) as relevance_score,
+                ROUND((jobs_with_skill * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 0))::numeric, 2) as market_demand
+            FROM recommended_skills
+            ORDER BY relevance_score DESC, job_count DESC
+            LIMIT :limit
+        """)
+        
+        result = db.execute(query, {"skills": skill_list, "limit": limit}).fetchall()
+        
+        if not result:
+            return {
+                "known_skills": skill_list,
+                "recommendations": [],
+                "message": "No recommendations found. Try different skills or check spelling."
+            }
+        
+        return {
+            "known_skills": skill_list,
+            "recommendations": [
+                {
+                    "skill": row.skill,
+                    "job_count": row.job_count,
+                    "relevance_score": float(row.relevance_score),
+                    "market_demand": float(row.market_demand),
+                    "reason": f"Appears in {row.relevance_score:.0f}% of jobs that require your skills"
+                }
+                for row in result
+            ]
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to compare skills: {str(e)}")
-
-@router.get("/pairs", response_model=List[schemas.SkillPair])
-async def get_skill_pairs(
-    limit: int = Query(15, ge=1, le=50, description="Maximum number of skill pairs to return"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get common skill pairs based on co-occurrence in job postings.
-
-    Args:
-        limit: Maximum number of pairs to return
-
-    Returns:
-        Array of skill pairs with co-occurrence statistics
-    """
-    try:
-        query = text("""
-            WITH skill_pairs AS (
-                SELECT
-                    s1.skill as skill1,
-                    s2.skill as skill2,
-                    COUNT(*) as job_count
-                FROM (
-                    SELECT j.id, jsonb_array_elements_text(value) as skill
-                    FROM jobs j, jsonb_each(j.extracted_skills)
-                    WHERE j.extracted_skills IS NOT NULL AND j.is_tech_job = TRUE
-                ) s1
-                JOIN (
-                    SELECT j.id, jsonb_array_elements_text(value) as skill
-                    FROM jobs j, jsonb_each(j.extracted_skills)
-                    WHERE j.extracted_skills IS NOT NULL AND j.is_tech_job = TRUE
-                ) s2 ON s1.id = s2.id AND s1.skill < s2.skill
-                GROUP BY s1.skill, s2.skill
-                HAVING COUNT(*) > 5
-            )
-            SELECT
-                skill1,
-                skill2,
-                job_count,
-                ROUND(job_count * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
-            FROM skill_pairs
-            ORDER BY job_count DESC
-            LIMIT :limit
-        """)
-
-        result = db.execute(query, {"limit": limit}).fetchall()
-
-        return [
-            {
-                "skill1": row.skill1,
-                "skill2": row.skill2,
-                "job_count": row.job_count,
-                "percentage": float(row.percentage),
-                "strength": "high" if row.job_count > 50 else "medium" if row.job_count > 20 else "low"
-            }
-            for row in result
-        ]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch skill pairs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get recommendations: {str(e)}")
 
 @router.get("/search")
 async def search_skills(
@@ -472,10 +424,10 @@ async def search_skills(
     """
     try:
         search_query = text("""
-            SELECT skill, COUNT(*) as job_count,
-                   ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+            SELECT skill, COUNT(DISTINCT job_id) as job_count,
+                   ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT COUNT(DISTINCT id) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
             FROM (
-                SELECT jsonb_array_elements_text(value) as skill
+                SELECT id as job_id, jsonb_array_elements_text(value) as skill
                 FROM jobs, jsonb_each(extracted_skills)
                 WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
                   AND (:category IS NULL OR key = :category)

@@ -104,7 +104,7 @@ function App() {
                     </main>
 
                     {/* Footer */}
-                    <footer className="mt-auto border-t border-gray-200 dark:border-gray-700 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+                    <footer className="mt-auto glass-card rounded-none border-l-0 border-r-0 border-b-0 border-t border-gray-200 dark:border-gray-700">
                         <div className="container mx-auto px-4 py-6 max-w-7xl">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="text-center md:text-left">

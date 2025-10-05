@@ -35,12 +35,18 @@ def _get_popular_skills_cached(category: Optional[str], limit: int) -> List[dict
     
     try:
         if category:
-            # Get skills from specific category
+            # Get skills from specific category - count UNIQUE jobs per skill
             query = text("""
-                SELECT skill, COUNT(*) as job_count,
-                       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+                WITH total_jobs AS (
+                    SELECT COUNT(DISTINCT id) as total
+                    FROM jobs
+                    WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                )
+                SELECT skill, 
+                       COUNT(DISTINCT job_id) as job_count,
+                       ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
                 FROM (
-                    SELECT jsonb_array_elements_text(extracted_skills->:category) as skill
+                    SELECT id as job_id, jsonb_array_elements_text(extracted_skills->:category) as skill
                     FROM jobs 
                     WHERE extracted_skills ? :category AND is_tech_job = TRUE
                 ) skills_data
@@ -50,12 +56,18 @@ def _get_popular_skills_cached(category: Optional[str], limit: int) -> List[dict
             """)
             result = db.execute(query, {"category": category, "limit": limit}).fetchall()
         else:
-            # Get all skills across all categories
+            # Get all skills across all categories - count UNIQUE jobs per skill
             query = text("""
-                SELECT skill, COUNT(*) as job_count,
-                       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+                WITH total_jobs AS (
+                    SELECT COUNT(DISTINCT id) as total
+                    FROM jobs
+                    WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                )
+                SELECT skill, 
+                       COUNT(DISTINCT job_id) as job_count,
+                       ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
                 FROM (
-                    SELECT jsonb_array_elements_text(value) as skill
+                    SELECT id as job_id, jsonb_array_elements_text(value) as skill
                     FROM jobs, jsonb_each(extracted_skills)
                     WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
                 ) skills_data
@@ -71,7 +83,7 @@ def _get_popular_skills_cached(category: Optional[str], limit: int) -> List[dict
                 "display_name": nlp_engine.get_display_name(row.skill),
                 "category": nlp_engine.get_skill_category(row.skill),
                 "job_count": row.job_count,
-                "percentage": float(row.percentage)
+                "job_percentage": float(row.job_percentage)
             }
             for row in result
         ]
@@ -87,36 +99,158 @@ def _get_popular_skills_cached(category: Optional[str], limit: int) -> List[dict
 async def get_popular_skills(
     category: Optional[str] = Query(None, description="Skill category filter (programming_languages, web_frameworks, etc.)"),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of skills to return"),
+    days: int = Query(0, ge=0, le=365, description="Time period in days (0 for all time)"),
     db: Session = Depends(get_db)
 ):
     """
     Get most popular skills across all jobs with percentages.
     
-    Uses 10-minute cache to improve performance for repeated requests.
+    Filters by job posted date (not scrape date).
     
     Args:
         category: Optional skill category filter
         limit: Maximum number of skills to return
+        days: Time period in days (0 for all time)
         
     Returns:
         List of skills with job counts, percentages, and display names
     """
+    from sqlalchemy import text
+    from app.processors.nlp_engine import NLPEngine
+    from fastapi import HTTPException
+    from app.core.logging import get_logger
+    
+    nlp_engine = NLPEngine()
+    logger = get_logger(__name__)
+    
     try:
-        return _get_popular_skills_cached(category, limit)
+        # Calculate cutoff date
+        cutoff_date = None
+        if days > 0:
+            cutoff_date = date.today() - timedelta(days=days)
+        
+        if category:
+            # Get skills from specific category with date filtering
+            if cutoff_date:
+                query = text("""
+                    WITH total_jobs AS (
+                        SELECT COUNT(DISTINCT id) as total
+                        FROM jobs
+                        WHERE extracted_skills IS NOT NULL 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    )
+                    SELECT skill, 
+                           COUNT(DISTINCT job_id) as job_count,
+                           ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
+                    FROM (
+                        SELECT id as job_id, jsonb_array_elements_text(extracted_skills->:category) as skill
+                        FROM jobs 
+                        WHERE extracted_skills ? :category 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    ) skills_data
+                    GROUP BY skill
+                    ORDER BY job_count DESC
+                    LIMIT :limit
+                """)
+                result = db.execute(query, {"category": category, "limit": limit, "cutoff_date": cutoff_date}).fetchall()
+            else:
+                query = text("""
+                    WITH total_jobs AS (
+                        SELECT COUNT(DISTINCT id) as total
+                        FROM jobs
+                        WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                    )
+                    SELECT skill, 
+                           COUNT(DISTINCT job_id) as job_count,
+                           ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
+                    FROM (
+                        SELECT id as job_id, jsonb_array_elements_text(extracted_skills->:category) as skill
+                        FROM jobs 
+                        WHERE extracted_skills ? :category AND is_tech_job = TRUE
+                    ) skills_data
+                    GROUP BY skill
+                    ORDER BY job_count DESC
+                    LIMIT :limit
+                """)
+                result = db.execute(query, {"category": category, "limit": limit}).fetchall()
+        else:
+            # Get all skills across all categories with date filtering
+            if cutoff_date:
+                query = text("""
+                    WITH total_jobs AS (
+                        SELECT COUNT(DISTINCT id) as total
+                        FROM jobs
+                        WHERE extracted_skills IS NOT NULL 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    )
+                    SELECT skill, 
+                           COUNT(DISTINCT job_id) as job_count,
+                           ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
+                    FROM (
+                        SELECT id as job_id, jsonb_array_elements_text(value) as skill
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    ) skills_data
+                    GROUP BY skill
+                    ORDER BY job_count DESC
+                    LIMIT :limit
+                """)
+                result = db.execute(query, {"limit": limit, "cutoff_date": cutoff_date}).fetchall()
+            else:
+                query = text("""
+                    WITH total_jobs AS (
+                        SELECT COUNT(DISTINCT id) as total
+                        FROM jobs
+                        WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                    )
+                    SELECT skill, 
+                           COUNT(DISTINCT job_id) as job_count,
+                           ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage
+                    FROM (
+                        SELECT id as job_id, jsonb_array_elements_text(value) as skill
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                    ) skills_data
+                    GROUP BY skill
+                    ORDER BY job_count DESC
+                    LIMIT :limit
+                """)
+                result = db.execute(query, {"limit": limit}).fetchall()
+        
+        return [
+            {
+                "name": row.skill,
+                "display_name": nlp_engine.get_display_name(row.skill),
+                "category": nlp_engine.get_skill_category(row.skill),
+                "job_count": row.job_count,
+                "job_percentage": float(row.job_percentage)
+            }
+            for row in result
+        ]
+        
     except Exception as e:
-        from app.core.logging import get_logger
-        logger = get_logger(__name__)
         logger.error(f"Error fetching popular skills: {e}")
-        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail="Failed to fetch popular skills")
 
 @router.get("/skills/by-category")
 async def get_skills_by_category(
     limit_per_category: int = Query(10, ge=1, le=50, description="Max skills per category"),
+    days: int = Query(0, ge=0, le=365, description="Time period in days (0 for all time)"),
     db: Session = Depends(get_db)
 ):
     """
     Get skill distribution organized by category.
+    
+    Filters by job posted date (not scrape date).
+    
+    Args:
+        limit_per_category: Max skills per category
+        days: Time period in days (0 for all time)
     
     Returns:
         Skills grouped by category with job counts, percentages, and display names
@@ -128,19 +262,108 @@ async def get_skills_by_category(
     nlp_engine = NLPEngine()
     
     try:
-        query = text("""
-            SELECT category, skill, COUNT(*) as job_count,
-                   ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL), 2) as percentage
-            FROM (
-                SELECT key as category, jsonb_array_elements_text(value) as skill
-                FROM jobs, jsonb_each(extracted_skills)
-                WHERE extracted_skills IS NOT NULL
-            ) skills_data
-            GROUP BY category, skill
-            ORDER BY category, job_count DESC
-        """)
+        # Calculate cutoff date
+        cutoff_date = None
+        if days > 0:
+            cutoff_date = date.today() - timedelta(days=days)
         
-        result = db.execute(query).fetchall()
+        # Count UNIQUE jobs per skill within each category
+        # IMPORTANT: category_percentage shows what % of jobs IN THIS CATEGORY have this skill
+        # One job can have multiple skills in the same category, but we count that job only ONCE per category
+        if cutoff_date:
+            query = text("""
+                WITH total_jobs AS (
+                    SELECT COUNT(DISTINCT id) as total
+                    FROM jobs
+                    WHERE extracted_skills IS NOT NULL 
+                      AND is_tech_job = TRUE
+                      AND posted_date >= :cutoff_date
+                ),
+                skill_counts AS (
+                    -- Count unique jobs per skill per category
+                    SELECT 
+                        s.category, 
+                        s.skill,
+                        COUNT(DISTINCT s.job_id) as job_count
+                    FROM (
+                        SELECT key as category, id as job_id, jsonb_array_elements_text(value) as skill
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    ) s
+                    GROUP BY s.category, s.skill
+                ),
+                category_totals AS (
+                    -- Count UNIQUE jobs that have ANY skill in each category
+                    -- This ensures percentages add up to 100% (or more if jobs have multiple skills)
+                    SELECT 
+                        category,
+                        COUNT(DISTINCT job_id) as total_jobs_in_category
+                    FROM (
+                        SELECT key as category, id as job_id
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL 
+                          AND is_tech_job = TRUE
+                          AND posted_date >= :cutoff_date
+                    ) cat_jobs
+                    GROUP BY category
+                )
+                SELECT 
+                    sc.category, 
+                    sc.skill, 
+                    sc.job_count,
+                    ROUND(sc.job_count * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage,
+                    ROUND(sc.job_count * 100.0 / ct.total_jobs_in_category, 2) as category_percentage
+                FROM skill_counts sc
+                JOIN category_totals ct ON sc.category = ct.category
+                ORDER BY sc.category, sc.job_count DESC
+            """)
+            result = db.execute(query, {"cutoff_date": cutoff_date}).fetchall()
+        else:
+            query = text("""
+                WITH total_jobs AS (
+                    SELECT COUNT(DISTINCT id) as total
+                    FROM jobs
+                    WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                ),
+                skill_counts AS (
+                    -- Count unique jobs per skill per category
+                    SELECT 
+                        s.category, 
+                        s.skill,
+                        COUNT(DISTINCT s.job_id) as job_count
+                    FROM (
+                        SELECT key as category, id as job_id, jsonb_array_elements_text(value) as skill
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                    ) s
+                    GROUP BY s.category, s.skill
+                ),
+                category_totals AS (
+                    -- Count UNIQUE jobs that have ANY skill in each category
+                    -- This ensures percentages add up to 100% (or more if jobs have multiple skills)
+                    SELECT 
+                        category,
+                        COUNT(DISTINCT job_id) as total_jobs_in_category
+                    FROM (
+                        SELECT key as category, id as job_id
+                        FROM jobs, jsonb_each(extracted_skills)
+                        WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                    ) cat_jobs
+                    GROUP BY category
+                )
+                SELECT 
+                    sc.category, 
+                    sc.skill, 
+                    sc.job_count,
+                    ROUND(sc.job_count * 100.0 / (SELECT total FROM total_jobs), 2) as job_percentage,
+                    ROUND(sc.job_count * 100.0 / ct.total_jobs_in_category, 2) as category_percentage
+                FROM skill_counts sc
+                JOIN category_totals ct ON sc.category = ct.category
+                ORDER BY sc.category, sc.job_count DESC
+            """)
+            result = db.execute(query).fetchall()
         
         # Group by category and limit per category
         categories = {}
@@ -152,7 +375,8 @@ async def get_skills_by_category(
                     "name": row.skill,
                     "display_name": nlp_engine.get_display_name(row.skill),
                     "job_count": row.job_count,
-                    "percentage": float(row.percentage)
+                    "job_percentage": float(row.job_percentage),
+                    "category_percentage": float(row.category_percentage)
                 })
         
         return categories
@@ -376,11 +600,19 @@ async def get_skill_categories(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to fetch skill categories")
 
 @router.get("/dashboard", response_model=schemas.DashboardStats)
-async def get_dashboard_stats(db: Session = Depends(get_db)):
+async def get_dashboard_stats(
+    days: int = Query(0, ge=0, le=365, description="Time period in days (0 for all time)"),
+    db: Session = Depends(get_db)
+):
     """
     Get dashboard statistics including job counts, company counts, and salary info.
+    
+    Filters by job posted date (not scrape date).
+    
+    Args:
+        days: Time period in days (0 for all time)
     """
-    stats = crud.get_dashboard_stats(db)
+    stats = crud.get_dashboard_stats(db, days)
     return schemas.DashboardStats(**stats)
 
 @router.get("/trending-skills", response_model=List[schemas.TrendingSkill])
