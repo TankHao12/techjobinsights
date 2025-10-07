@@ -584,36 +584,108 @@ class NLPEngine:
 
         return 'NOT_SPECIFIED'
 
-    def parse_posted_date(self, date_text: str) -> Optional[date]:
-        """Parse posted date from various text formats"""
+    def parse_posted_date(self, date_text: str, reference_date: Optional[date] = None) -> Optional[date]:
+        """
+        Parse posted date from various text formats used by job sites
+        
+        Args:
+            date_text: The date string to parse (e.g., "5d ago", "twenty three")
+            reference_date: The date to calculate relative times from (defaults to today)
+                           Use scraped_at date for historical data!
+        
+        Handles formats like:
+        - "5d ago", "23h ago", "2w ago", "1m ago" (short format)
+        - "5 days ago", "23 hours ago", "2 weeks ago" (long format)
+        - "Listed 5d ago", "Posted 23h ago" (with prefix)
+        - "today", "yesterday", "just posted"
+        - Word numbers: "one", "twenty three", "fourteen" (scraped incompletely)
+        - "dd/mm/yyyy", "yyyy/mm/dd" (absolute dates)
+        """
 
         if not date_text:
             return None
 
         date_text = date_text.lower().strip()
-        today = date.today()
+        # Use reference_date if provided (for historical data), otherwise use today
+        today = reference_date if reference_date else date.today()
+        
+        # Word to number mapping for text-based numbers
+        word_to_num = {
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+            'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+            'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+            'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24,
+            'twenty five': 25, 'twenty six': 26, 'twenty seven': 27, 'twenty eight': 28,
+            'twenty nine': 29, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60
+        }
 
         try:
-            # Relative dates
-            if 'today' in date_text or 'just posted' in date_text:
+            # Handle "today", "yesterday", "just posted"
+            if 'today' in date_text or 'just posted' in date_text or 'just now' in date_text:
                 return today
             elif 'yesterday' in date_text:
                 return today - timedelta(days=1)
-            elif 'days ago' in date_text:
-                days_match = re.search(r'(\\d+)\\s*days?\\s*ago', date_text)
+
+            # Hours ago - both short and long formats
+            # Matches: "23h ago", "23 hours ago", "Posted 23h ago", "Listed 23 hours ago"
+            hours_patterns = [
+                r'(\d+)\s*h(?:ours?)?\s*ago',  # 23h ago, 23 hours ago
+                r'(\d+)\s*hr(?:s?)?\s*ago',    # 23hr ago, 23hrs ago
+            ]
+            for pattern in hours_patterns:
+                hours_match = re.search(pattern, date_text)
+                if hours_match:
+                    hours = int(hours_match.group(1))
+                    # Convert hours to days (round up for hours >= 12)
+                    if hours < 24:
+                        return today
+                    else:
+                        days = (hours + 12) // 24  # Round to nearest day
+                        return today - timedelta(days=days)
+
+            # Days ago - both short and long formats
+            # Matches: "5d ago", "5 days ago", "Posted 5d ago", "Listed 5 days ago"
+            days_patterns = [
+                r'(\d+)\s*d(?:ays?)?\s*ago',  # 5d ago, 5 days ago
+            ]
+            for pattern in days_patterns:
+                days_match = re.search(pattern, date_text)
                 if days_match:
-                    return today - timedelta(days=int(days_match.group(1)))
-            elif 'week ago' in date_text or 'weeks ago' in date_text:
-                weeks_match = re.search(r'(\\d+)\\s*weeks?\\s*ago', date_text)
+                    days = int(days_match.group(1))
+                    return today - timedelta(days=days)
+
+            # Weeks ago - both short and long formats
+            # Matches: "2w ago", "2 weeks ago", "Posted 2w ago", "Listed 2 weeks ago"
+            weeks_patterns = [
+                r'(\d+)\s*w(?:eeks?)?\s*ago',  # 2w ago, 2 weeks ago, 1 week ago
+            ]
+            for pattern in weeks_patterns:
+                weeks_match = re.search(pattern, date_text)
                 if weeks_match:
-                    return today - timedelta(weeks=int(weeks_match.group(1)))
-                else:
-                    return today - timedelta(weeks=1)
+                    weeks = int(weeks_match.group(1))
+                    return today - timedelta(weeks=weeks)
+            
+            # Handle "a week ago" or "one week ago" (no number)
+            if 'week ago' in date_text:
+                return today - timedelta(weeks=1)
+
+            # Months ago - both short and long formats
+            # Matches: "1m ago", "2 months ago", "Posted 1m ago", "Listed 2 months ago"
+            months_patterns = [
+                r'(\d+)\s*m(?:onths?)?\s*ago',  # 1m ago, 2 months ago
+            ]
+            for pattern in months_patterns:
+                months_match = re.search(pattern, date_text)
+                if months_match:
+                    months = int(months_match.group(1))
+                    # Approximate: 1 month = 30 days
+                    return today - timedelta(days=months * 30)
 
             # Absolute dates
             date_patterns = [
-                r'(\\d{1,2})\\s*[/-]\\s*(\\d{1,2})\\s*[/-]\\s*(\\d{4})',  # dd/mm/yyyy
-                r'(\\d{4})\\s*[/-]\\s*(\\d{1,2})\\s*[/-]\\s*(\\d{1,2})',  # yyyy/mm/dd
+                r'(\d{1,2})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{4})',  # dd/mm/yyyy
+                r'(\d{4})\s*[/-]\s*(\d{1,2})\s*[/-]\s*(\d{1,2})',  # yyyy/mm/dd
             ]
 
             for pattern in date_patterns:
@@ -630,6 +702,25 @@ class NLPEngine:
                         return date(year, month, day)
                     except ValueError:
                         continue
+            
+            # Handle standalone word numbers (incompletely scraped dates)
+            # Examples: "one", "three", "twenty three", "fourteen"
+            # These are likely hours or days - we'll infer based on value
+            if date_text in word_to_num:
+                number = word_to_num[date_text]
+                
+                # Logic: 1-24 likely hours (treat as today if <24, else convert to days)
+                #        25+ likely days
+                if number < 24:
+                    # Treat as hours - less than 24 hours means today
+                    return today
+                elif number < 31:
+                    # Likely hours, but treat as days for accuracy (e.g., "twenty five" = 25 hours ≈ 1 day)
+                    days = (number + 12) // 24  # Round to nearest day
+                    return today - timedelta(days=days)
+                else:
+                    # 30+ likely means days
+                    return today - timedelta(days=number)
 
         except Exception as e:
             logger.warning(f"Date parsing failed for '{date_text}': {e}")

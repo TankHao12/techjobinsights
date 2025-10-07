@@ -232,10 +232,14 @@ class DataProcessingPipeline:
                 'is_active': True  # Default to active, will be updated by URL check
             }
 
-            # Pass posted_date directly from raw_jobs (no NLP parsing needed!)
+            # Parse posted_date from raw_jobs using scraped_at as reference
             if raw_job.posting_date:
-                # Try to parse the date from the scraped text
-                parsed_date = self.nlp_engine.parse_posted_date(raw_job.posting_date)
+                # Use scraped_at as reference date for accurate historical parsing
+                reference_date = raw_job.scraped_at.date() if raw_job.scraped_at else None
+                parsed_date = self.nlp_engine.parse_posted_date(
+                    raw_job.posting_date,
+                    reference_date=reference_date
+                )
                 job_data['posted_date'] = parsed_date
 
             # 1. Tech Job Classification

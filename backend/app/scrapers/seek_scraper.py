@@ -99,38 +99,44 @@ class SeekScraper(BaseScraper):
                 card_text = card.get_text()
                 
                 # Enhanced patterns to match current Seek date formats
+                # Use re.search() to get full match, not just captured groups
                 date_patterns = [
-                    r'Listed\s+(twenty|thirty|forty|fifty|sixty)\s+(one|two|three|four|five|six|seven|eight|nine)\s+hours?\s+ago',
-                    r'Listed\s+(\d+)\s*hours?\s*ago',
-                    r'Listed\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five)\s+days?\s*ago',
-                    r'Listed\s+(\d+)\s*days?\s*ago',
-                    r'Listed\s+(one|two|three|four)\s+weeks?\s*ago',
-                    r'Listed\s+(\d+)\s*weeks?\s*ago',
-                    r'Listed\s+(one|two|three|four|five|six)\s+months?\s*ago',
-                    r'Listed\s+(\d+)\s*months?\s*ago',
+                    # Word-based numbers with units
+                    r'Listed\s+(?:twenty|thirty|forty|fifty|sixty)\s+(?:one|two|three|four|five|six|seven|eight|nine)\s+hours?\s+ago',
+                    r'Listed\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five)\s+(?:hours?|days?)\s+ago',
+                    r'Listed\s+(?:one|two|three|four)\s+weeks?\s*ago',
+                    r'Listed\s+(?:one|two|three|four|five|six)\s+months?\s*ago',
+                    # Numeric with units
+                    r'Listed\s+\d+\s*(?:hours?|days?|weeks?|months?)\s*ago',
+                    # Short formats
+                    r'\d+[hdwm]\s+ago',
+                    # Special cases
                     r'Listed\s+today',
                     r'Listed\s+yesterday',
                     r'just\s+posted',
-                    r'\d+h\s+ago',
-                    r'\d+d\s+ago',
-                    r'\d+w\s+ago',
-                    r'\d+m\s+ago'
+                    # Posted prefix (in detail pages)
+                    r'Posted\s+(?:twenty|thirty|forty|fifty|sixty)\s+(?:one|two|three|four|five|six|seven|eight|nine)\s+hours?\s+ago',
+                    r'Posted\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five)\s+(?:hours?|days?)\s+ago',
+                    r'Posted\s+\d+\s*(?:hours?|days?|weeks?|months?)\s*ago',
+                    r'Posted\s+\d+[hdwm]\s+ago',
+                    r'Posted\s+today',
+                    r'Posted\s+yesterday',
                 ]
                 
                 for pattern in date_patterns:
-                    matches = re.findall(pattern, card_text, re.IGNORECASE)
-                    if matches:
-                        # Get the full match including the pattern
-                        full_matches = re.findall(pattern.replace(r'\s+', r'\s+'), card_text, re.IGNORECASE)
-                        if full_matches:
-                            posted_date = full_matches[0] if isinstance(full_matches[0], str) else ' '.join(full_matches[0])
-                            break
+                    match = re.search(pattern, card_text, re.IGNORECASE)
+                    if match:
+                        posted_date = match.group(0)  # Get the full match
+                        break
                 
                 # If no pattern matched, try broader search
                 if not posted_date:
-                    broader_matches = re.findall(r'(?:Listed\s+)?(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty)\s*(?:hours?|days?|weeks?|months?)\s*ago|today|yesterday|just\s*posted|\d+[hdwm]\s*ago', card_text, re.IGNORECASE)
-                    if broader_matches:
-                        posted_date = broader_matches[0]
+                    broader_match = re.search(
+                        r'(?:Listed|Posted)\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five|thirty|forty|fifty|sixty)\s*(?:hours?|days?|weeks?|months?)?\s*ago|today|yesterday|just\s*posted|\d+[hdwm]\s*ago',
+                        card_text, re.IGNORECASE
+                    )
+                    if broader_match:
+                        posted_date = broader_match.group(0)
 
                 card_data = {
                     'title': title,
@@ -270,24 +276,26 @@ class SeekScraper(BaseScraper):
         # Get the full page text for pattern matching
         page_text = soup.get_text()
         
-        # Enhanced patterns for detail page (matches "Posted 23h ago", "Posted 2d ago", etc.)
+        # Enhanced patterns for detail page - use re.search() for full match
         detail_date_patterns = [
-            r'Posted\s+(\d+)\s*hours?\s*ago',
-            r'Posted\s+(\d+)h\s*ago',
-            r'Posted\s+(\d+)\s*days?\s*ago', 
-            r'Posted\s+(\d+)d\s*ago',
-            r'Posted\s+(\d+)\s*weeks?\s*ago',
-            r'Posted\s+(\d+)w\s*ago',
-            r'Posted\s+(\d+)\s*months?\s*ago',
-            r'Posted\s+(\d+)m\s*ago',
+            # Word-based numbers with units
+            r'Posted\s+(?:twenty|thirty|forty|fifty|sixty)\s+(?:one|two|three|four|five|six|seven|eight|nine)\s+hours?\s+ago',
+            r'Posted\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five)\s+(?:hours?|days?)\s+ago',
+            r'Posted\s+(?:one|two|three|four)\s+weeks?\s*ago',
+            r'Posted\s+(?:one|two|three|four|five|six)\s+months?\s*ago',
+            r'Listed\s+(?:twenty|thirty|forty|fifty|sixty)\s+(?:one|two|three|four|five|six|seven|eight|nine)\s+hours?\s+ago',
+            r'Listed\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five)\s+(?:hours?|days?)\s+ago',
+            r'Listed\s+(?:one|two|three|four)\s+weeks?\s*ago',
+            r'Listed\s+(?:one|two|three|four|five|six)\s+months?\s*ago',
+            # Numeric with units
+            r'Posted\s+\d+\s*(?:hours?|days?|weeks?|months?)\s*ago',
+            r'Listed\s+\d+\s*(?:hours?|days?|weeks?|months?)\s*ago',
+            # Short formats
+            r'Posted\s+\d+[hdwm]\s*ago',
+            r'Listed\s+\d+[hdwm]\s*ago',
+            # Special cases
             r'Posted\s+today',
             r'Posted\s+yesterday',
-            r'Listed\s+(\d+)\s*hours?\s*ago',
-            r'Listed\s+(\d+)h\s*ago',
-            r'Listed\s+(\d+)\s*days?\s*ago',
-            r'Listed\s+(\d+)d\s*ago',
-            r'Listed\s+(\d+)\s*weeks?\s*ago',
-            r'Listed\s+(\d+)w\s*ago',
             r'Listed\s+today',
             r'Listed\s+yesterday'
         ]
@@ -295,12 +303,15 @@ class SeekScraper(BaseScraper):
         for pattern in detail_date_patterns:
             matches = re.search(pattern, page_text, re.IGNORECASE)
             if matches:
-                posted_date_text = matches.group(0)
+                posted_date_text = matches.group(0)  # Get the full match
                 break
         
         # Broader fallback if specific patterns don't match
         if not posted_date_text:
-            broader_matches = re.search(r'(?:Posted|Listed)\s+(?:\d+\s*(?:hours?|days?|weeks?|months?)\s*ago|\d+[hdwm]\s*ago|today|yesterday)', page_text, re.IGNORECASE)
+            broader_matches = re.search(
+                r'(?:Posted|Listed)\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty\s+one|twenty\s+two|twenty\s+three|twenty\s+four|twenty\s+five|thirty|forty|fifty|sixty)\s*(?:hours?|days?|weeks?|months?)?\s*ago|(?:Posted|Listed)\s+(?:today|yesterday)',
+                page_text, re.IGNORECASE
+            )
             if broader_matches:
                 posted_date_text = broader_matches.group(0)
 

@@ -132,13 +132,16 @@ class IncrementalJobScraper:
                 if not location:
                     location = job_card.get('raw_location', '')
 
+                # Get posted date - prefer detail page over card (more accurate)
+                posting_date = raw_metadata.get('posted_date_text', '') or job_card.get('card_posted_date', '')
+
                 return {
                     'title': job_card.get('title'),
                     'company': job_card.get('company'),
                     'url': job_url,
                     'full_description': job_details.get('full_description', ''),
                     'location': location,  # Save location separately for NLP processing
-                    'posting_date': job_card.get('card_posted_date', ''),
+                    'posting_date': posting_date,  # Prefer detail page date over card date
                     'search_term': search_term,
                     'scraped_at': datetime.now(),
                     'processed': False,

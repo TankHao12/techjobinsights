@@ -126,13 +126,17 @@ class RawDataCollector:
                         if job_details and job_details.get('extraction_success'):
                             # Prepare job data (including location from metadata)
                             raw_metadata = job_details.get('raw_metadata', {})
+                            
+                            # Get posted date - prefer detail page over card (more accurate)
+                            posting_date = raw_metadata.get('posted_date_text', '') or job_card.get('card_posted_date', '')
+                            
                             job_data = {
                                 'title': job_card.get('title'),
                                 'company': job_card.get('company'),
                                 'url': job_url,
                                 'full_description': job_details.get('full_description', ''),
                                 'location': raw_metadata.get('location', ''),  # Save scraped location
-                                'posting_date': job_card.get('card_posted_date', ''),
+                                'posting_date': posting_date,  # Prefer detail page date over card date
                                 'search_term': search_term,
                             }
 
