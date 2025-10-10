@@ -109,7 +109,6 @@ const SkillComparison: React.FC = () => {
       </div>
 
       {/* Skill Selection */}
-      <GlassCard>
         <div className="p-0">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Select Skills to Compare ({selectedSkills.length}/3)
@@ -154,7 +153,7 @@ const SkillComparison: React.FC = () => {
 
               {/* Search Results */}
               {(searchResults.length > 0 || isSearching) && (
-                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-[9999] mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-2xl max-h-60 overflow-y-auto">
                   {isSearching ? (
                     <div className="p-4 text-center">
                       <LoadingSpinner size="sm" />
@@ -183,7 +182,6 @@ const SkillComparison: React.FC = () => {
             </div>
           )}
         </div>
-      </GlassCard>
 
       {/* Comparison Results */}
       {selectedSkills.length > 0 && (
@@ -193,38 +191,48 @@ const SkillComparison: React.FC = () => {
               <LoadingSpinner size="lg" text="Loading comparison data..." />
             </div>
           ) : error ? (
-            <GlassCard>
               <div className="p-0 text-center">
                 <p className="text-red-600 dark:text-red-400">
                   Failed to load comparison data. Please try again.
                 </p>
               </div>
-            </GlassCard>
+          ) : selectedSkills.length === 1 ? (
+              <div className="p-0 text-center">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-blue-500" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Add More Skills to Compare
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  You've selected <span className="font-semibold text-blue-600 dark:text-blue-400 capitalize">{selectedSkills[0]}</span>. 
+                  Please add at least one more skill to see a side-by-side comparison of market demand, growth trends, and opportunities.
+                </p>
+              </div>
           ) : comparisonData && comparisonData.length > 0 ? (
             <>
               {/* Key Metrics Comparison */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-1">
-                  <GlassCard>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Metrics Card - Only visible on desktop */}
+                <div className="hidden lg:block lg:col-span-1">
+                  <GlassCard hover={false}>
                     <div className="p-0">
-                      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                         Metrics
                       </h3>
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <BarChart3 className="w-4 h-4" />
+                        <div className="flex items-center gap-3 text-lg font-medium text-gray-700 dark:text-gray-300">
+                          <BarChart3 className="w-5 h-5" />
                           <span>Job Demand</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <TrendingUp className="w-4 h-4" />
+                        <div className="flex items-center gap-3 text-lg font-medium text-gray-700 dark:text-gray-300">
+                          <TrendingUp className="w-5 h-5" />
                           <span>Growth Rate</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="w-4 h-4" />
+                        <div className="flex items-center gap-3 text-lg font-medium text-gray-700 dark:text-gray-300">
+                          <Building2 className="w-5 h-5" />
                           <span>Companies</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Percent className="w-4 h-4" />
+                        <div className="flex items-center gap-3 text-lg font-medium text-gray-700 dark:text-gray-300">
+                          <Percent className="w-5 h-5" />
                           <span>Market Share</span>
                         </div>
                       </div>
@@ -235,35 +243,60 @@ const SkillComparison: React.FC = () => {
                 {comparisonData.map((skill) => {
                   const GrowthIcon = getGrowthIcon(skill.growth_rate);
                   return (
-                    <GlassCard key={skill.skill}>
+                    <GlassCard key={skill.skill} hover={false}>
                       <div className="p-0">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
                           {skill.skill}
                         </h3>
                         <div className="space-y-3">
+                          {/* Job Demand */}
                           <div className="flex justify-between items-center">
-                            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                              {skill.demand}
-                            </span>
-                            <BarChart3 className="w-4 h-4 text-gray-400" />
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                {skill.demand}
+                              </span>
+                              <span className="text-sm text-gray-500 lg:hidden">jobs</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 lg:hidden">Job Demand</span>
+                              <BarChart3 className="w-5 h-5 text-gray-400" />
+                            </div>
                           </div>
+                          
+                          {/* Growth Rate */}
                           <div className="flex justify-between items-center">
                             <span className={`text-xl font-semibold ${getGrowthColor(skill.growth_rate)}`}>
                               {skill.growth_rate > 0 ? '+' : ''}{skill.growth_rate.toFixed(1)}%
                             </span>
-                            <GrowthIcon className={`w-4 h-4 ${getGrowthColor(skill.growth_rate)}`} />
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 lg:hidden">Growth Rate</span>
+                              <GrowthIcon className={`w-5 h-5 ${getGrowthColor(skill.growth_rate)}`} />
+                            </div>
                           </div>
+                          
+                          {/* Companies */}
                           <div className="flex justify-between items-center">
-                            <span className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                              {skill.companies_using}
-                            </span>
-                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                {skill.companies_using}
+                              </span>
+                              <span className="text-sm text-gray-500 lg:hidden">companies</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 lg:hidden">Companies</span>
+                              <Building2 className="w-5 h-5 text-gray-400" />
+                            </div>
                           </div>
+                          
+                          {/* Market Share */}
                           <div className="flex justify-between items-center">
                             <span className="text-lg font-medium text-gray-900 dark:text-gray-100">
                               {skill.percentage.toFixed(1)}%
                             </span>
-                            <Percent className="w-4 h-4 text-gray-400" />
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 lg:hidden">Market Share</span>
+                              <Percent className="w-5 h-5 text-gray-400" />
+                            </div>
                           </div>
                         </div>
                       </div>
