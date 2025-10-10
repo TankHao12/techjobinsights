@@ -38,11 +38,11 @@ const SkillComparison: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Fetch comparison data
+  // Fetch comparison data (only when we have at least 2 skills)
   const { data: comparisonData, isLoading, error } = useQuery({
     queryKey: ['skillComparison', selectedSkills],
     queryFn: () => compareSkills(selectedSkills),
-    enabled: selectedSkills.length > 0,
+    enabled: selectedSkills.length >= 2,
   });
 
   // Search skills
@@ -186,27 +186,27 @@ const SkillComparison: React.FC = () => {
       {/* Comparison Results */}
       {selectedSkills.length > 0 && (
         <>
-          {isLoading ? (
+          {selectedSkills.length === 1 ? (
+            <div className="p-0 text-center">
+              <BarChart3 className="w-12 h-12 mx-auto mb-4 text-blue-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Add More Skills to Compare
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                You've selected <span className="font-semibold text-blue-600 dark:text-blue-400 capitalize">{selectedSkills[0]}</span>. 
+                Please add at least one more skill to see a side-by-side comparison of market demand, growth trends, and opportunities.
+              </p>
+            </div>
+          ) : isLoading ? (
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner size="lg" text="Loading comparison data..." />
             </div>
           ) : error ? (
-              <div className="p-0 text-center">
-                <p className="text-red-600 dark:text-red-400">
-                  Failed to load comparison data. Please try again.
-                </p>
-              </div>
-          ) : selectedSkills.length === 1 ? (
-              <div className="p-0 text-center">
-                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-blue-500" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Add More Skills to Compare
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  You've selected <span className="font-semibold text-blue-600 dark:text-blue-400 capitalize">{selectedSkills[0]}</span>. 
-                  Please add at least one more skill to see a side-by-side comparison of market demand, growth trends, and opportunities.
-                </p>
-              </div>
+            <div className="p-0 text-center">
+              <p className="text-red-600 dark:text-red-400">
+                Failed to load comparison data. Please try again.
+              </p>
+            </div>
           ) : comparisonData && comparisonData.length > 0 ? (
             <>
               {/* Key Metrics Comparison */}
