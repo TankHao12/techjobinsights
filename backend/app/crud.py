@@ -62,16 +62,40 @@ def update_company(
     db.refresh(db_company)
     return db_company
 
-def get_companies_with_stats(db: Session, skip: int = 0, limit: int = 100):
-    """Get companies with job statistics"""
-    return db.query(
+def get_companies_with_stats(db: Session, skip: int = 0, limit: int = 100, search: Optional[str] = None):
+    """Get companies with job statistics and optional name search"""
+    # Build the base query with aggregations
+    base_query = db.query(
         models.Company,
         func.count(models.Job.id).filter(models.Job.is_tech_job == True).label('total_jobs_count'),
         func.count(models.Job.id).filter(
             and_(models.Job.is_active == True, models.Job.is_tech_job == True)
-        ).label('active_jobs_count'),
-        func.avg(models.Job.salary_max).filter(models.Job.is_tech_job == True).label('avg_salary_offered')
-    ).outerjoin(models.Job).group_by(models.Company.id).offset(skip).limit(limit).all()
+        ).label('active_jobs_count')
+    ).outerjoin(models.Job).group_by(models.Company.id)
+    
+    # Apply search filter if provided
+    if search:
+        search_term = f"%{search}%"
+        base_query = base_query.filter(
+            or_(
+                models.Company.name.ilike(search_term),
+                models.Company.normalized_name.ilike(search_term)
+            )
+        )
+    
+    # Get total count by converting to subquery and counting
+    # For grouped queries, we need to count the number of groups (companies)
+    from sqlalchemy import select, func as sql_func
+    subquery = base_query.subquery()
+    total_count = db.query(sql_func.count()).select_from(subquery).scalar()
+    
+    # Apply ordering and pagination
+    # Order by active_jobs_count descending (column index 2 in the result tuple)
+    results = base_query.order_by(desc(func.count(models.Job.id).filter(
+        and_(models.Job.is_active == True, models.Job.is_tech_job == True)
+    ))).offset(skip).limit(limit).all()
+    
+    return results, total_count
 
 def get_companies_with_job_count(db: Session, limit: int = 100):
     """Get companies ordered by job count for autocomplete"""
@@ -105,6 +129,219 @@ def create_location(db: Session, location: schemas.LocationCreate) -> models.Loc
     db.commit()
     db.refresh(db_location)
     return db_location
+
+def get_locations_with_stats(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100, 
+    search: Optional[str] = None,
+    time_period: Optional[int] = None,
+    skills: Optional[List[str]] = None
+):
+    """
+    Get locations with job statistics and optional filtering.
+    
+    Args:
+        db: Database session
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+        search: Optional search term for location name
+        time_period: Optional time period in days to filter jobs
+        skills: Optional list of skills to filter jobs
+    
+    Returns:
+        Tuple of (results, total_count)
+    """
+    # Calculate cutoff date if time_period is specified
+    cutoff_date = None
+    if time_period and time_period > 0:
+        cutoff_date = date.today() - timedelta(days=time_period)
+    
+    # Build base query with job filters
+    job_filter_conditions = [models.Job.is_tech_job == True]
+    if cutoff_date:
+        job_filter_conditions.append(models.Job.posted_date >= cutoff_date)
+    
+    # Build query with aggregations
+    base_query = db.query(
+        models.Location,
+        func.count(models.Job.id).label('total_jobs_count'),
+        func.count(models.Job.id).filter(
+            and_(models.Job.is_active == True, *job_filter_conditions)
+        ).label('active_jobs_count'),
+        func.avg(models.Job.salary_max).filter(
+            and_(models.Job.is_active == True, models.Job.salary_max.isnot(None), *job_filter_conditions)
+        ).label('avg_salary')
+    ).outerjoin(models.Job)
+    
+    # Apply skills filter if provided
+    if skills:
+        for skill in skills:
+            base_query = base_query.filter(
+                text("jobs.extracted_skills::text ILIKE :skill")
+            ).params(skill=f"%{skill}%")
+    
+    base_query = base_query.group_by(models.Location.id)
+    
+    # Apply search filter if provided
+    if search:
+        search_term = f"%{search}%"
+        base_query = base_query.filter(
+            or_(
+                models.Location.city.ilike(search_term),
+                models.Location.region.ilike(search_term)
+            )
+        )
+    
+    # Get total count
+    from sqlalchemy import select, func as sql_func
+    subquery = base_query.subquery()
+    total_count = db.query(sql_func.count()).select_from(subquery).scalar()
+    
+    # Apply ordering and pagination - order by active jobs count descending
+    results = base_query.order_by(desc('active_jobs_count')).offset(skip).limit(limit).all()
+    
+    return results, total_count
+
+def get_region_top_companies(
+    db: Session, 
+    location_id: int, 
+    limit: int = 5,
+    time_period: Optional[int] = None,
+    skills: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
+    """
+    Get top companies hiring in a specific region.
+    
+    Args:
+        db: Database session
+        location_id: Location ID to filter by
+        limit: Maximum number of companies to return
+        time_period: Optional time period in days to filter jobs
+        skills: Optional list of skills to filter jobs
+    
+    Returns:
+        List of dictionaries with company info and job counts
+    """
+    # Calculate cutoff date if time_period is specified
+    cutoff_date = None
+    if time_period and time_period > 0:
+        cutoff_date = date.today() - timedelta(days=time_period)
+    
+    # Build query conditions
+    job_conditions = [
+        models.Job.location_id == location_id,
+        models.Job.is_active == True,
+        models.Job.is_tech_job == True
+    ]
+    
+    if cutoff_date:
+        job_conditions.append(models.Job.posted_date >= cutoff_date)
+    
+    # Build base query
+    query = db.query(
+        models.Company,
+        func.count(models.Job.id).label('job_count')
+    ).join(models.Job).filter(and_(*job_conditions))
+    
+    # Apply skills filter if provided
+    if skills:
+        for skill in skills:
+            query = query.filter(
+                text("jobs.extracted_skills::text ILIKE :skill")
+            ).params(skill=f"%{skill}%")
+    
+    query = query.group_by(models.Company.id).order_by(desc('job_count')).limit(limit)
+    
+    results = query.all()
+    
+    return [
+        {
+            "id": company.id,
+            "name": company.name,
+            "job_count": job_count
+        }
+        for company, job_count in results
+    ]
+
+def get_region_details(
+    db: Session, 
+    location_id: int,
+    time_period: Optional[int] = None,
+    skills: Optional[List[str]] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Get detailed statistics for a specific region.
+    
+    Args:
+        db: Database session
+        location_id: Location ID to get details for
+        time_period: Optional time period in days to filter jobs
+        skills: Optional list of skills to filter jobs
+    
+    Returns:
+        Dictionary with location details and statistics, or None if not found
+    """
+    # Get location
+    location = get_location(db, location_id)
+    if not location:
+        return None
+    
+    # Calculate cutoff date if time_period is specified
+    cutoff_date = None
+    if time_period and time_period > 0:
+        cutoff_date = date.today() - timedelta(days=time_period)
+    
+    # Build job filter conditions
+    job_conditions = [
+        models.Job.location_id == location_id,
+        models.Job.is_tech_job == True
+    ]
+    
+    if cutoff_date:
+        job_conditions.append(models.Job.posted_date >= cutoff_date)
+    
+    # Build base query
+    job_query = db.query(models.Job).filter(and_(*job_conditions))
+    
+    # Apply skills filter if provided
+    if skills:
+        for skill in skills:
+            job_query = job_query.filter(
+                text("extracted_skills::text ILIKE :skill")
+            ).params(skill=f"%{skill}%")
+    
+    # Get statistics
+    total_jobs = job_query.count()
+    active_jobs = job_query.filter(models.Job.is_active == True).count()
+    
+    # Get average salary
+    avg_salary_query = job_query.filter(
+        and_(
+            models.Job.is_active == True,
+            models.Job.salary_max.isnot(None)
+        )
+    )
+    avg_salary_result = db.query(func.avg(models.Job.salary_max)).filter(
+        models.Job.id.in_([j.id for j in avg_salary_query.all()])
+    ).scalar()
+    
+    # Get top companies
+    top_companies = get_region_top_companies(
+        db, location_id, limit=5, time_period=time_period, skills=skills
+    )
+    
+    return {
+        "id": location.id,
+        "city": location.city,
+        "region": location.region,
+        "country": location.country,
+        "created_at": location.created_at,
+        "total_jobs_count": total_jobs,
+        "active_jobs_count": active_jobs,
+        "avg_salary": float(avg_salary_result) if avg_salary_result else None,
+        "top_companies": top_companies
+    }
 
 # =============================================================================
 # CATEGORY CRUD OPERATIONS
@@ -589,6 +826,29 @@ def get_dashboard_stats(db: Session, days: int = 0) -> Dict[str, Any]:
     
     avg_salary_result = avg_salary_query.scalar()
     
+    # Count jobs with salary information
+    jobs_with_salary_query = db.query(models.Job).filter(
+        and_(
+            models.Job.salary_max.isnot(None),
+            # models.Job.is_active == True,
+            models.Job.is_tech_job == True
+        )
+    )
+    if cutoff_date:
+        jobs_with_salary_query = jobs_with_salary_query.filter(models.Job.posted_date >= cutoff_date)
+    
+    jobs_with_salary = jobs_with_salary_query.count()
+    
+    # Get the actual last data update time (most recent job processing)
+    last_processed = db.query(func.max(models.Job.processed_at)).scalar()
+    last_scraped = db.query(func.max(models.RawJob.scraped_at)).scalar()
+    
+    # Use the most recent of processed or scraped time
+    actual_last_updated = max(
+        filter(None, [last_processed, last_scraped]),
+        default=datetime.utcnow()
+    )
+    
     return {
         "total_jobs": total_jobs,
         "active_jobs": active_jobs,
@@ -597,7 +857,8 @@ def get_dashboard_stats(db: Session, days: int = 0) -> Dict[str, Any]:
         "total_skills": total_skills,
         "new_jobs_today": new_jobs_today,
         "avg_salary": float(avg_salary_result) if avg_salary_result else None,
-        "last_updated": datetime.utcnow()
+        "jobs_with_salary": jobs_with_salary,
+        "last_updated": actual_last_updated
     }
 
 def get_skill_trends(

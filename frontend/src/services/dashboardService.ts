@@ -19,6 +19,7 @@ export interface DashboardResponse {
   total_skills: number;
   new_jobs_today: number;
   avg_salary?: number;
+  jobs_with_salary: number;
   last_updated: string;
 }
 

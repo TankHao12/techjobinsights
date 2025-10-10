@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, TrendingUp, Building2, Target, Info, Menu, X, Moon, Sun, Search } from 'lucide-react';
+import { Home, TrendingUp, Building2, Target, Info, Menu, X, Moon, Sun, Search, MapPin } from 'lucide-react';
 
 interface NavigationProps {
     theme: 'light' | 'dark';
@@ -16,6 +16,7 @@ export const Navigation: React.FC<NavigationProps> = ({ theme, toggleTheme }) =>
         { path: '/skills', label: 'Skills Analytics', icon: Target },
         { path: '/skills/compare', label: 'Compare Skills', icon: TrendingUp },
         { path: '/companies', label: 'Companies', icon: Building2 },
+        { path: '/regions', label: 'Regional Insights', icon: MapPin },
         { path: '/tracked-keywords', label: 'Tracked Keywords', icon: Search },
         { path: '/about', label: 'About', icon: Info },
     ];
@@ -38,7 +39,7 @@ export const Navigation: React.FC<NavigationProps> = ({ theme, toggleTheme }) =>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center space-x-8">
+                    <div className="hidden lg:flex items-center space-x-8 ml-12">
                         {navigationItems.map((item) => {
                             const Icon = item.icon;
                             return (
@@ -82,3 +83,4 @@ export const Navigation: React.FC<NavigationProps> = ({ theme, toggleTheme }) =>
         </nav>
     );
 };
+

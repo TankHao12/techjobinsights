@@ -90,6 +90,19 @@ class Location(LocationBase):
     class Config:
         from_attributes = True
 
+class LocationWithStats(Location):
+    """Location with job statistics"""
+    active_jobs_count: int = Field(0, description="Number of currently active job postings")
+    total_jobs_count: int = Field(0, description="Total jobs posted in this location")
+    avg_salary: Optional[float] = Field(None, description="Average salary for jobs in this location")
+    top_companies: List[Dict[str, Any]] = Field(default_factory=list, description="Top companies hiring in this region")
+
+class RegionalFilters(BaseModel):
+    """Filters for regional insights queries"""
+    time_period: Optional[int] = Field(None, ge=0, description="Time period in days (30, 60, 90, or None for all time)")
+    skills: Optional[List[str]] = Field(None, description="Filter by specific skills")
+    search: Optional[str] = Field(None, description="Search locations by name")
+
 # =============================================================================
 # CATEGORY SCHEMAS
 # =============================================================================
@@ -120,6 +133,7 @@ class Category(CategoryBase):
 class SkillBase(BaseModel):
     """Base skill schema"""
     name: str = Field(..., max_length=100, description="Skill name")
+    display_name: Optional[str] = Field(None, max_length=100, description="Display name for the skill")
     category: Optional[SkillCategory] = Field(None, description="Skill category")
     aliases: Optional[str] = Field(None, description="JSON array of alternative names")
     description: Optional[str] = Field(None, description="Skill description")
@@ -150,6 +164,7 @@ class SkillWithStats(Skill):
     job_count: int = 0
     required_count: int = 0
     primary_count: int = 0
+    percentage: Optional[float] = None
     avg_salary: Optional[float] = None
     trend_percentage: Optional[float] = None
 
@@ -322,6 +337,7 @@ class DashboardStats(BaseModel):
     total_skills: int = 0
     new_jobs_today: int = 0
     avg_salary: Optional[float] = None
+    jobs_with_salary: int = 0
     last_updated: datetime
 
 class TrendingSkill(BaseModel):

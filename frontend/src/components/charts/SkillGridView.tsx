@@ -11,6 +11,7 @@ interface SkillData {
   value: number;
   color?: string;
   category?: string;
+  percentage?: number;
 }
 
 interface SkillGridViewProps {
@@ -64,8 +65,20 @@ const SkillGridView: React.FC<SkillGridViewProps> = ({
             {index + 1}
           </div>
 
+          {/* Percentage Badge - Top Right */}
+          {skill.percentage !== undefined && (
+            <div className="absolute top-2 right-2 text-right">
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {skill.percentage.toFixed(1)}%
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                of jobs
+              </div>
+            </div>
+          )}
+
           {/* Skill Name */}
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 capitalize break-words min-h-[2.5rem]">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 capitalize break-words min-h-[2.5rem] pr-16">
             {skill.name}
           </h3>
 

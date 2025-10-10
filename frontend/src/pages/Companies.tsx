@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Search, Code2, TrendingUp } from 'lucide-react';
-import { getCompanies, getCompaniesByTech, getPopularCompaniesAutocomplete } from '../services/companiesService';
+import { getCompanies, getCompaniesByTech } from '../services/companiesService';
 import { LoadingSpinner } from '../components/common';
 import { GlassCard } from '../components/common/GlassCard';
 
@@ -32,10 +32,11 @@ const Companies: React.FC = () => {
     enabled: activeTab === 'bytech' && techSearch.length > 0,
   });
 
-  const { data: topCompanies } = useQuery({
-    queryKey: ['topCompanies'],
-    queryFn: () => getPopularCompaniesAutocomplete(10),
-  });
+  // Temporarily disabled top companies query
+  // const { data: topCompanies } = useQuery({
+  //   queryKey: ['topCompanies'],
+  //   queryFn: () => getPopularCompaniesAutocomplete(10),
+  // });
 
   return (
     <div className="space-y-6">
@@ -99,7 +100,7 @@ const Companies: React.FC = () => {
         </div>
       ) : (
         <div className="relative">
-          <Code2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Code2 className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Enter technology name (e.g., React, Python, AWS)..."
@@ -122,7 +123,7 @@ const Companies: React.FC = () => {
           <>
             {/* Companies Grid */}
             {data && data.items.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {data.items.map((company) => (
                   <GlassCard
                     key={company.id}
@@ -130,7 +131,7 @@ const Companies: React.FC = () => {
                     onClick={() => navigate(`/companies/${company.id}`)}
                     className="cursor-pointer"
                   >
-                    <div className="p-6">
+                    <div className="p-0">
                       <div className="flex items-start justify-between mb-3">
                         <Building2 className="w-8 h-8 text-blue-600" />
                       </div>
@@ -216,7 +217,7 @@ const Companies: React.FC = () => {
                   {techCompanies.length} companies using {techSearch}
                 </h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {techCompanies.map((company) => (
                   <GlassCard
                     key={company.id}
@@ -250,8 +251,8 @@ const Companies: React.FC = () => {
         </>
       )}
 
-      {/* Top Hiring Companies Sidebar (shown on all tab only) */}
-      {activeTab === 'all' && topCompanies && topCompanies.length > 0 && (
+      {/* Top Hiring Companies Sidebar (shown on all tab only) - Temporarily Hidden */}
+      {/* {activeTab === 'all' && topCompanies && topCompanies.length > 0 && (
         <GlassCard>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -274,7 +275,7 @@ const Companies: React.FC = () => {
             </div>
           </div>
         </GlassCard>
-      )}
+      )} */}
     </div>
   );
 };

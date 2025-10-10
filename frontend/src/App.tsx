@@ -15,6 +15,8 @@ import SkillDetail from './pages/SkillDetail';
 const SkillComparisonPage = React.lazy(() => import('./pages/SkillComparison'));
 import Companies from './pages/Companies';
 import CompanyDetail from './pages/CompanyDetail';
+import Regions from './pages/Regions';
+import RegionDetail from './pages/RegionDetail';
 import About from './pages/About';
 import TrackedKeywords from './pages/TrackedKeywords';
 
@@ -78,7 +80,6 @@ function App() {
 
                             {/* Skills Routes */}
                             <Route path="/skills" element={<SkillsAnalytics />} />
-                            <Route path="/skills/:skillName" element={<SkillDetail />} />
                             <Route
                                 path="/skills/compare"
                                 element={
@@ -87,10 +88,15 @@ function App() {
                                     </React.Suspense>
                                 }
                             />
+                            <Route path="/skills/:skillName" element={<SkillDetail />} />
 
                             {/* Companies Routes */}
                             <Route path="/companies" element={<Companies />} />
                             <Route path="/companies/:companyId" element={<CompanyDetail />} />
+
+                            {/* Regions Routes */}
+                            <Route path="/regions" element={<Regions />} />
+                            <Route path="/regions/:regionId" element={<RegionDetail />} />
 
                             {/* Tracked Keywords */}
                             <Route path="/tracked-keywords" element={<TrackedKeywords />} />

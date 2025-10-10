@@ -7,13 +7,11 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Building2, Target, DollarSign, TrendingUp } from 'lucide-react';
-import { getDashboardStats, getTrendingSkills } from '../services/dashboardService';
+import { Briefcase, Building2, DollarSign } from 'lucide-react';
+import { getDashboardStats } from '../services/dashboardService';
 import { getPopularSkills } from '../services/skillsService';
 import StatCard from '../components/common/StatCard';
 import { LoadingSpinner, FilterDropdown } from '../components/common';
-import { GlassCard } from '../components/common/GlassCard';
-import SkillBadge from '../components/common/SkillBadge';
 import { SkillGridView } from '../components/charts';
 import { SkillCategory } from '../types';
 
@@ -43,19 +41,13 @@ const Dashboard: React.FC = () => {
         queryFn: () => getDashboardStats(timeRange),
     });
 
-    // Fetch trending skills
-    const { data: trendingSkills, isLoading: skillsLoading } = useQuery({
-        queryKey: ['trending', timeRange],
-        queryFn: () => getTrendingSkills(8, 30),
-    });
-
     // Fetch popular skills for bar chart (US-1.2)
     const { data: popularSkills, isLoading: popularSkillsLoading } = useQuery({
         queryKey: ['skills', 'popular', timeRange, selectedCategory],
         queryFn: () => getPopularSkills(20, timeRange, selectedCategory === 'all' ? undefined : selectedCategory),
     });
 
-    const isLoading = statsLoading || skillsLoading;
+    const isLoading = statsLoading;
 
     const timeRangeOptions = [
         { value: 30, label: '30 days' },
@@ -72,8 +64,8 @@ const Dashboard: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Market Intelligence Dashboard</h1>
                     <p className="text-gray-600 dark:text-gray-400">New Zealand Tech Job Market Overview</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map((i) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
                         <StatCard key={i} title="" value="" icon={<Briefcase className="w-6 h-6" />} loading={true} />
                     ))}
                 </div>
@@ -128,17 +120,15 @@ const Dashboard: React.FC = () => {
 
             {/* Stats Grid */}
             {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <StatCard title="Total Jobs" value={stats.total_jobs} icon={<Briefcase className="w-6 h-6" />} color="blue" subtitle={`${stats.active_jobs} active`} />
                     <StatCard title="Companies Hiring" value={stats.total_companies} icon={<Building2 className="w-6 h-6" />} color="purple" subtitle={`${stats.hiring_companies} actively hiring`} />
-                    <StatCard title="Skills Tracked" value={stats.total_skills} icon={<Target className="w-6 h-6" />} color="green" subtitle="Technology skills" />
-                    <StatCard title="Average Salary" value={stats.avg_salary ? `$${Math.round(stats.avg_salary / 1000)}k` : 'N/A'} icon={<DollarSign className="w-6 h-6" />} color="cyan" subtitle="Per annum (NZD)" />
+                    <StatCard title="Average Salary" value={stats.avg_salary ? `$${Math.round(stats.avg_salary / 1000)}k` : 'N/A'} icon={<DollarSign className="w-6 h-6" />} color="cyan" subtitle={stats.jobs_with_salary > 0 ? `Based on ${stats.jobs_with_salary} jobs with salary data` : 'Per annum (NZD)'} />
                 </div>
             )}
 
             {/* US-1.2: Top Skills Demand Chart */}
-            <GlassCard>
-                <div className="p-6">
+                <div className="p-0">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
                         <div className="flex-1">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Top Skills in Demand</h2>
@@ -164,6 +154,13 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Info banner explaining the percentages */}
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Understanding the numbers:</span> Percentages show how many jobs require each skill. For example, if Python shows 85%, it means 85% of all tech jobs require Python skills.
+                        </p>
+                    </div>
+
                     <SkillGridView
                         data={
                             popularSkills?.map((skill, index) => ({
@@ -186,66 +183,10 @@ const Dashboard: React.FC = () => {
 
                     <div className="mt-6 text-sm text-gray-500 dark:text-gray-400 text-center">Click on any skill card to see detailed analytics</div>
                 </div>
-            </GlassCard>
 
-            {/* US-1.3: Trending Skills Widget */}
-            {trendingSkills && trendingSkills.length > 0 && (
-                <GlassCard>
-                    <div className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Trending Skills</h2>
-                                <p className="text-gray-600 dark:text-gray-400 mt-1">Top 8 technologies by demand with 30-day growth trends</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {trendingSkills.map((skill) => {
-                                const growth = skill.growth_percentage || 0;
-                                const isHot = growth > 50;
-                                const isEmerging = growth > 30 && growth <= 50;
-                                const isGrowing = growth > 10;
-                                const isStable = growth >= -10 && growth <= 10;
-                                const isDeclining = growth < -10;
-
-                                return (
-                                    <div key={skill.skill_id} className="p-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800/30 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700" onClick={() => navigate(`/skills/${skill.name.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')}`)}>
-                                        {/* Badge and Growth Indicator */}
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="flex flex-col gap-1">
-                                                {isHot && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-semibold rounded">🔥 Hot</span>}
-                                                {isEmerging && !isHot && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-semibold rounded">⭐ Emerging</span>}
-                                            </div>
-                                            {/* Growth Arrow and Percentage */}
-                                            <div className="flex items-center gap-1">
-                                                {isGrowing && !isEmerging && !isHot && <span className="text-green-600 dark:text-green-400">↑</span>}
-                                                {isStable && <span className="text-gray-500">→</span>}
-                                                {isDeclining && <span className="text-red-600 dark:text-red-400">↓</span>}
-                                                <span className={`text-sm font-bold ${growth > 10 ? 'text-green-600 dark:text-green-400' : growth < -10 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                                                    {growth > 0 ? '+' : ''}
-                                                    {growth.toFixed(0)}%
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Skill Name */}
-                                        <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">{skill.name}</h3>
-
-                                        {/* Category Badge */}
-                                        <SkillBadge name={skill.category?.replace(/_/g, ' ') || 'Other'} size="sm" category={skill.category} className="mb-2" />
-
-                                        {/* Job Count */}
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                            <span className="font-semibold">{skill.job_count}</span> jobs
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </GlassCard>
-            )}
 
             {/* Quick Links */}
+            {/*
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <GlassCard hover={true} onClick={() => (window.location.href = '/skills')}>
                     <div className="p-6 text-center">
@@ -269,9 +210,21 @@ const Dashboard: React.FC = () => {
                     </div>
                 </GlassCard>
             </div>
-
+            */}
             {/* Data Freshness */}
-            {stats && <div className="text-center text-sm text-gray-500 dark:text-gray-400">Data last updated: {new Date(stats.last_updated).toLocaleString()}</div>}
+            {stats && (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                    Data last updated: {new Date(stats.last_updated).toLocaleString('en-NZ', { 
+                        timeZone: 'Pacific/Auckland',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    })} NZST
+                </div>
+            )}
         </div>
     );
 };

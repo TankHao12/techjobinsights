@@ -629,13 +629,14 @@ async def get_trending_skills_analytics(
     """
     trending_skills = crud.get_trending_skills(db, days=days, limit=limit)
     
+    # trending_skills returns list of dicts with: name, job_count, avg_salary
     return [
         schemas.TrendingSkill(
-            skill_id=skill.id,
-            name=skill.name,
-            category=skill.category,
-            job_count=skill.job_count,
-            avg_salary=float(skill.avg_salary) if skill.avg_salary else None
+            skill_id=0,  # Skills don't have IDs in JSONB storage
+            name=skill["name"],
+            category=None,  # Category not available from JSONB extraction
+            job_count=skill["job_count"],
+            avg_salary=skill["avg_salary"]
         )
         for skill in trending_skills
     ]

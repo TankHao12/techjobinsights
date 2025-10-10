@@ -7,5 +7,6 @@ export * from './api';
 export * from './dashboardService';
 export * from './skillsService';
 export * from './companiesService';
+export * from './regionsService';
 
 

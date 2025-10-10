@@ -162,6 +162,161 @@ async def compare_skills(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to compare skills: {str(e)}")
 
+@router.get("/recommendations")
+async def get_skill_recommendations(
+    known_skills: str = Query(..., description="Comma-separated list of skills you already know"),
+    limit: int = Query(10, ge=1, le=20, description="Maximum number of recommendations"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get skill recommendations based on skills you already know.
+    
+    Returns skills that frequently appear together with your known skills,
+    helping you decide what to learn next to maximize job opportunities.
+    
+    Args:
+        known_skills: Comma-separated list of skills you know (e.g., "python,sql")
+        limit: Maximum number of recommendations to return
+        
+    Returns:
+        List of recommended skills with relevance scores and job counts
+    """
+    try:
+        skill_list = [s.strip().lower() for s in known_skills.split(',') if s.strip()]
+        
+        if not skill_list:
+            raise HTTPException(status_code=400, detail="Please provide at least one skill")
+        
+        # Find skills that frequently appear with the known skills
+        query = text("""
+            WITH user_skills AS (
+                SELECT unnest(ARRAY[:skills]) as known_skill
+            ),
+            jobs_with_user_skills AS (
+                -- Jobs that have at least one of the user's skills
+                SELECT DISTINCT j.id
+                FROM jobs j, jsonb_each(j.extracted_skills) skills
+                WHERE j.extracted_skills IS NOT NULL 
+                  AND j.is_tech_job = TRUE
+                  AND EXISTS (
+                      SELECT 1 FROM user_skills us
+                      WHERE LOWER(jsonb_array_elements_text(skills.value)::text) = LOWER(us.known_skill)
+                  )
+            ),
+            recommended_skills AS (
+                -- Find other skills in those jobs
+                SELECT 
+                    LOWER(jsonb_array_elements_text(skills.value)) as skill,
+                    COUNT(DISTINCT j.id) as jobs_with_skill,
+                    COUNT(DISTINCT j.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs_with_user_skills), 0) as relevance_score
+                FROM jobs j, jsonb_each(j.extracted_skills) skills
+                JOIN jobs_with_user_skills jwu ON j.id = jwu.id
+                WHERE j.extracted_skills IS NOT NULL
+                  AND j.is_tech_job = TRUE
+                  AND LOWER(jsonb_array_elements_text(skills.value)) NOT IN (
+                      SELECT LOWER(unnest(ARRAY[:skills]))
+                  )
+                GROUP BY LOWER(jsonb_array_elements_text(skills.value))
+                HAVING COUNT(DISTINCT j.id) > 5
+            )
+            SELECT 
+                skill,
+                jobs_with_skill as job_count,
+                ROUND(relevance_score::numeric, 1) as relevance_score,
+                ROUND((jobs_with_skill * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 0))::numeric, 2) as market_demand
+            FROM recommended_skills
+            ORDER BY relevance_score DESC, job_count DESC
+            LIMIT :limit
+        """)
+        
+        result = db.execute(query, {"skills": skill_list, "limit": limit}).fetchall()
+        
+        if not result:
+            return {
+                "known_skills": skill_list,
+                "recommendations": [],
+                "message": "No recommendations found. Try different skills or check spelling."
+            }
+        
+        return {
+            "known_skills": skill_list,
+            "recommendations": [
+                {
+                    "skill": row.skill,
+                    "job_count": row.job_count,
+                    "relevance_score": float(row.relevance_score),
+                    "market_demand": float(row.market_demand),
+                    "reason": f"Appears in {row.relevance_score:.0f}% of jobs that require your skills"
+                }
+                for row in result
+            ]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get recommendations: {str(e)}")
+
+@router.get("/search", response_model=List[schemas.SkillWithStats])
+async def search_skills(
+    query: str = Query(..., min_length=2, description="Search query"),
+    category: Optional[str] = Query(None, description="Skill category filter"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
+    db: Session = Depends(get_db)
+):
+    """
+    Search for skills by name.
+
+    Args:
+        query: Search term
+        category: Optional skill category filter
+        limit: Maximum number of results
+
+    Returns:
+        Array of matching skills with stats
+    """
+    try:
+        search_query = text("""
+            SELECT skill, COUNT(DISTINCT job_id) as job_count,
+                   ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT COUNT(DISTINCT id) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
+            FROM (
+                SELECT id as job_id, jsonb_array_elements_text(value) as skill
+                FROM jobs, jsonb_each(extracted_skills)
+                WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
+                  AND (:category IS NULL OR key = :category)
+            ) skills_data
+            WHERE LOWER(skill) LIKE LOWER(:query)
+            GROUP BY skill
+            ORDER BY job_count DESC
+            LIMIT :limit
+        """)
+
+        search_pattern = f"%{query}%"
+        result = db.execute(search_query, {
+            "query": search_pattern,
+            "category": category,
+            "limit": limit
+        }).fetchall()
+
+        return [
+            {
+                "id": idx + 1,
+                "name": row.skill,
+                "display_name": row.skill,
+                "category": category or "not_specified",
+                "skill_type": "technical",
+                "popularity_score": int(row.percentage),
+                "job_count": row.job_count,
+                "required_count": row.job_count,
+                "primary_count": row.job_count,
+                "percentage": float(row.percentage)
+            }
+            for idx, row in enumerate(result)
+        ]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to search skills: {str(e)}")
+
 @router.get("/{skill_name}", response_model=schemas.SkillDetail)
 async def get_skill_detail(
     skill_name: str,
@@ -308,152 +463,3 @@ async def get_skill_detail(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch skill details: {str(e)}")
-
-@router.get("/recommendations")
-async def get_skill_recommendations(
-    known_skills: str = Query(..., description="Comma-separated list of skills you already know"),
-    limit: int = Query(10, ge=1, le=20, description="Maximum number of recommendations"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get skill recommendations based on skills you already know.
-    
-    Returns skills that frequently appear together with your known skills,
-    helping you decide what to learn next to maximize job opportunities.
-    
-    Args:
-        known_skills: Comma-separated list of skills you know (e.g., "python,sql")
-        limit: Maximum number of recommendations to return
-        
-    Returns:
-        List of recommended skills with relevance scores and job counts
-    """
-    try:
-        skill_list = [s.strip().lower() for s in known_skills.split(',') if s.strip()]
-        
-        if not skill_list:
-            raise HTTPException(status_code=400, detail="Please provide at least one skill")
-        
-        # Find skills that frequently appear with the known skills
-        query = text("""
-            WITH user_skills AS (
-                SELECT unnest(ARRAY[:skills]) as known_skill
-            ),
-            jobs_with_user_skills AS (
-                -- Jobs that have at least one of the user's skills
-                SELECT DISTINCT j.id
-                FROM jobs j, jsonb_each(j.extracted_skills) skills
-                WHERE j.extracted_skills IS NOT NULL 
-                  AND j.is_tech_job = TRUE
-                  AND EXISTS (
-                      SELECT 1 FROM user_skills us
-                      WHERE LOWER(jsonb_array_elements_text(skills.value)::text) = LOWER(us.known_skill)
-                  )
-            ),
-            recommended_skills AS (
-                -- Find other skills in those jobs
-                SELECT 
-                    LOWER(jsonb_array_elements_text(skills.value)) as skill,
-                    COUNT(DISTINCT j.id) as jobs_with_skill,
-                    COUNT(DISTINCT j.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs_with_user_skills), 0) as relevance_score
-                FROM jobs j, jsonb_each(j.extracted_skills) skills
-                JOIN jobs_with_user_skills jwu ON j.id = jwu.id
-                WHERE j.extracted_skills IS NOT NULL
-                  AND j.is_tech_job = TRUE
-                  AND LOWER(jsonb_array_elements_text(skills.value)) NOT IN (
-                      SELECT LOWER(unnest(ARRAY[:skills]))
-                  )
-                GROUP BY LOWER(jsonb_array_elements_text(skills.value))
-                HAVING COUNT(DISTINCT j.id) > 5
-            )
-            SELECT 
-                skill,
-                jobs_with_skill as job_count,
-                ROUND(relevance_score::numeric, 1) as relevance_score,
-                ROUND((jobs_with_skill * 100.0 / NULLIF((SELECT COUNT(*) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 0))::numeric, 2) as market_demand
-            FROM recommended_skills
-            ORDER BY relevance_score DESC, job_count DESC
-            LIMIT :limit
-        """)
-        
-        result = db.execute(query, {"skills": skill_list, "limit": limit}).fetchall()
-        
-        if not result:
-            return {
-                "known_skills": skill_list,
-                "recommendations": [],
-                "message": "No recommendations found. Try different skills or check spelling."
-            }
-        
-        return {
-            "known_skills": skill_list,
-            "recommendations": [
-                {
-                    "skill": row.skill,
-                    "job_count": row.job_count,
-                    "relevance_score": float(row.relevance_score),
-                    "market_demand": float(row.market_demand),
-                    "reason": f"Appears in {row.relevance_score:.0f}% of jobs that require your skills"
-                }
-                for row in result
-            ]
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get recommendations: {str(e)}")
-
-@router.get("/search")
-async def search_skills(
-    query: str = Query(..., min_length=2, description="Search query"),
-    category: Optional[str] = Query(None, description="Skill category filter"),
-    limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
-    db: Session = Depends(get_db)
-):
-    """
-    Search for skills by name.
-
-    Args:
-        query: Search term
-        category: Optional skill category filter
-        limit: Maximum number of results
-
-    Returns:
-        Array of matching skills with stats
-    """
-    try:
-        search_query = text("""
-            SELECT skill, COUNT(DISTINCT job_id) as job_count,
-                   ROUND(COUNT(DISTINCT job_id) * 100.0 / (SELECT COUNT(DISTINCT id) FROM jobs WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE), 2) as percentage
-            FROM (
-                SELECT id as job_id, jsonb_array_elements_text(value) as skill
-                FROM jobs, jsonb_each(extracted_skills)
-                WHERE extracted_skills IS NOT NULL AND is_tech_job = TRUE
-                  AND (:category IS NULL OR key = :category)
-            ) skills_data
-            WHERE LOWER(skill) LIKE LOWER(:query)
-            GROUP BY skill
-            ORDER BY job_count DESC
-            LIMIT :limit
-        """)
-
-        search_pattern = f"%{query}%"
-        result = db.execute(search_query, {
-            "query": search_pattern,
-            "category": category,
-            "limit": limit
-        }).fetchall()
-
-        return [
-            {
-                "skill": row.skill,
-                "job_count": row.job_count,
-                "percentage": float(row.percentage),
-                "category": category  # TODO: Get actual category for each skill
-            }
-            for row in result
-        ]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to search skills: {str(e)}")

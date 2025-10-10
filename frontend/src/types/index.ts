@@ -100,6 +100,13 @@ export interface Location {
   created_at: string;
 }
 
+export interface LocationWithStats extends Location {
+  active_jobs_count: number;
+  total_jobs_count: number;
+  avg_salary?: number;
+  top_companies?: Array<{ id: number; name: string; job_count: number }>;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -179,6 +186,7 @@ export interface DashboardStats {
   total_skills: number;
   new_jobs_today: number;
   avg_salary?: number;
+  jobs_with_salary: number;
   last_updated: string;
 }
 
@@ -367,6 +375,14 @@ export interface CompanySearchParams {
   page?: number;
   limit?: number;
   sort_by?: 'name' | 'active_jobs' | 'total_jobs';
+}
+
+export interface RegionalSearchParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+  time_period?: number;
+  skills?: string[];
 }
 
 // =============================================================================

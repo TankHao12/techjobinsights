@@ -49,37 +49,65 @@ async def get_companies(
     companies = crud.get_companies(db, skip=skip, limit=limit, industry=industry)
     return [schemas.Company.from_orm(company) for company in companies]
 
-@router.get("/with-stats", response_model=List[schemas.CompanyWithStats])
+@router.get("/with-stats", response_model=schemas.PaginatedResponse)
 async def get_companies_with_stats(
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=500, description="Maximum number of records to return"),
+    page: int = Query(1, ge=1, description="Page number (1-indexed)"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of records to return"),
+    search: Optional[str] = Query(None, description="Search companies by name"),
     db: Session = Depends(get_db)
 ):
     """
     Get companies with job statistics (active jobs, total jobs, avg salary).
     
-    - **skip**: Number of records to skip for pagination
-    - **limit**: Maximum number of records to return
+    - **page**: Page number (1-indexed)
+    - **limit**: Maximum number of records to return per page
+    - **search**: Optional search query for company name
     """
-    companies_with_stats = crud.get_companies_with_stats(db, skip=skip, limit=limit)
+    skip = (page - 1) * limit
+    
+    # Get filtered companies with stats
+    companies_with_stats, total_count = crud.get_companies_with_stats(
+        db, skip=skip, limit=limit, search=search
+    )
+    
+    # Ensure total_count is not None
+    total_count = total_count or 0
     
     result = []
     for company_data in companies_with_stats:
-        company = company_data[0]  # The Company object
-        stats = {
-            'total_jobs_count': company_data[1] or 0,
-            'active_jobs_count': company_data[2] or 0,
-            'avg_salary_offered': float(company_data[3]) if company_data[3] else None
-        }
-        
-        company_with_stats = schemas.CompanyWithStats.from_orm(company)
-        company_with_stats.total_jobs_count = stats['total_jobs_count']
-        company_with_stats.active_jobs_count = stats['active_jobs_count']
-        company_with_stats.avg_salary_offered = stats['avg_salary_offered']
-        
-        result.append(company_with_stats)
+        try:
+            company = company_data[0]  # The Company object
+            
+            # Create the response object with all fields at once
+            # company_data structure: (Company, total_jobs_count, active_jobs_count)
+            company_dict = {
+                'id': company.id,
+                'name': company.name,
+                'normalized_name': company.normalized_name,
+                'created_at': company.created_at,
+                'total_jobs_count': int(company_data[1]) if company_data[1] is not None else 0,
+                'active_jobs_count': int(company_data[2]) if company_data[2] is not None else 0,
+            }
+            
+            company_with_stats = schemas.CompanyWithStats(**company_dict)
+            result.append(company_with_stats)
+        except Exception as e:
+            # Log the error but continue processing other companies
+            print(f"Error processing company data: {e}")
+            continue
     
-    return result
+    # Calculate pagination metadata
+    total_pages = max(1, (total_count + limit - 1) // limit) if total_count > 0 else 1
+    
+    return schemas.PaginatedResponse(
+        items=result,
+        total=total_count,
+        page=page,
+        pages=total_pages,
+        per_page=limit,
+        has_next=page < total_pages,
+        has_prev=page > 1
+    )
 
 @router.get("/industries", response_model=List[str])
 async def get_industries(db: Session = Depends(get_db)):

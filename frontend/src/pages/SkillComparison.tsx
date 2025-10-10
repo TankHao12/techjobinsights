@@ -110,7 +110,7 @@ const SkillComparison: React.FC = () => {
 
       {/* Skill Selection */}
       <GlassCard>
-        <div className="p-6">
+        <div className="p-0">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Select Skills to Compare ({selectedSkills.length}/3)
           </h2>
@@ -194,7 +194,7 @@ const SkillComparison: React.FC = () => {
             </div>
           ) : error ? (
             <GlassCard>
-              <div className="p-8 text-center">
+              <div className="p-0 text-center">
                 <p className="text-red-600 dark:text-red-400">
                   Failed to load comparison data. Please try again.
                 </p>
@@ -206,7 +206,7 @@ const SkillComparison: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-1">
                   <GlassCard>
-                    <div className="p-4">
+                    <div className="p-0">
                       <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
                         Metrics
                       </h3>
@@ -236,7 +236,7 @@ const SkillComparison: React.FC = () => {
                   const GrowthIcon = getGrowthIcon(skill.growth_rate);
                   return (
                     <GlassCard key={skill.skill}>
-                      <div className="p-4">
+                      <div className="p-0">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
                           {skill.skill}
                         </h3>
@@ -274,7 +274,7 @@ const SkillComparison: React.FC = () => {
 
               {/* Trend Chart */}
               <GlassCard>
-                <div className="p-6">
+                <div className="p-0">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                     Demand Trend Comparison
                   </h2>
@@ -306,7 +306,7 @@ const SkillComparison: React.FC = () => {
 
               {/* Bar Chart Comparison */}
               <GlassCard>
-                <div className="p-6">
+                <div className="p-0">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                     Current Market Position
                   </h2>
@@ -326,7 +326,7 @@ const SkillComparison: React.FC = () => {
 
               {/* Summary Table */}
               <GlassCard>
-                <div className="p-6">
+                <div className="p-0">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                     Detailed Comparison
                   </h2>
@@ -389,7 +389,7 @@ const SkillComparison: React.FC = () => {
       {/* Empty State */}
       {selectedSkills.length === 0 && (
         <GlassCard>
-          <div className="p-8 text-center">
+          <div className="p-0 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
               No Skills Selected
