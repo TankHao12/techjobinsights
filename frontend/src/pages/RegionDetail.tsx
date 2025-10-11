@@ -16,18 +16,19 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { GlassCard, LoadingSpinner } from '../components/common';
+import { SkillMultiSelect } from '../components/common/SkillMultiSelect';
 import { getRegionDetails, getRegionCompanies, getRegionJobs } from '../services/regionsService';
 
 const RegionDetail: React.FC = () => {
   const { regionId } = useParams<{ regionId: string }>();
   const navigate = useNavigate();
   const [timePeriod, setTimePeriod] = useState<number | undefined>(undefined);
-  const [skillsFilter, setSkillsFilter] = useState('');
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [jobsPage, setJobsPage] = useState(1);
   const jobsLimit = 10;
 
-  // Parse skills from comma-separated string
-  const skills = skillsFilter.trim() ? skillsFilter.split(',').map(s => s.trim()).filter(s => s) : undefined;
+  // Use skills array directly (or undefined if empty)
+  const skills = selectedSkills.length > 0 ? selectedSkills : undefined;
 
   // Fetch region details
   const { data: regionData, isLoading: regionLoading } = useQuery({
@@ -116,9 +117,8 @@ const RegionDetail: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <GlassCard className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Time Period Filter */}
+      <div className="space-y-4">
+        <GlassCard hover={false} className="p-0">
           <div className="relative">
             <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <select
@@ -135,39 +135,34 @@ const RegionDetail: React.FC = () => {
               <option value="90">Last 90 Days</option>
             </select>
           </div>
+        </GlassCard>
 
-          {/* Skills Filter */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Filter by skills (comma-separated)..."
-              value={skillsFilter}
-              onChange={(e) => {
-                setSkillsFilter(e.target.value);
-                setJobsPage(1);
-              }}
-              className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-            />
-          </div>
+        {/* Skills Filter with Autocomplete - Outside GlassCard for proper z-index */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-4 shadow-sm">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Filter by Skills
+          </label>
+          <SkillMultiSelect
+            selectedSkills={selectedSkills}
+            onChange={(newSkills) => {
+              setSelectedSkills(newSkills);
+              setJobsPage(1);
+            }}
+            placeholder="Type to search and select skills..."
+            showAddButton={false}
+          />
         </div>
 
         {/* Active Filters Display */}
-        {(timePeriod || skills) && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {timePeriod && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                <Clock className="w-3 h-3 mr-1" />
-                {getTimePeriodLabel(timePeriod)}
-              </span>
-            )}
-            {skills && skills.length > 0 && skills.map((skill, idx) => (
-              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                {skill}
-              </span>
-            ))}
+        {timePeriod && (
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              <Clock className="w-3 h-3 mr-1" />
+              {getTimePeriodLabel(timePeriod)}
+            </span>
           </div>
         )}
-      </GlassCard>
+      </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -360,9 +355,16 @@ const RegionDetail: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   No jobs found
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your filters
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  {selectedSkills.length > 0 
+                    ? `No jobs match the selected skill${selectedSkills.length > 1 ? 's' : ''}: ${selectedSkills.join(', ')}`
+                    : 'Try adjusting your filters'}
                 </p>
+                {selectedSkills.length > 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                    Try removing some skills or changing the time period filter
+                  </p>
+                )}
               </div>
             )}
           </>

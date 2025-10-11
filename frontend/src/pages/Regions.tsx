@@ -10,17 +10,18 @@ import { MapPin, Search, Briefcase, Building2, DollarSign, Clock } from 'lucide-
 import { getRegions } from '../services/regionsService';
 import { LoadingSpinner } from '../components/common';
 import { GlassCard } from '../components/common/GlassCard';
+import { SkillMultiSelect } from '../components/common/SkillMultiSelect';
 
 const Regions: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [timePeriod, setTimePeriod] = useState<number | undefined>(undefined);
-  const [skillsFilter, setSkillsFilter] = useState('');
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const limit = 20;
 
-  // Parse skills from comma-separated string
-  const skills = skillsFilter.trim() ? skillsFilter.split(',').map(s => s.trim()).filter(s => s) : undefined;
+  // Use skills array directly (or undefined if empty)
+  const skills = selectedSkills.length > 0 ? selectedSkills : undefined;
 
   const { data, isLoading } = useQuery({
     queryKey: ['regions', search, page, timePeriod, skills],
@@ -53,77 +54,76 @@ const Regions: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <GlassCard className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search regions..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-            />
-          </div>
+      <div className="space-y-4">
+        <GlassCard hover={false} className="p-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search regions..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+              />
+            </div>
 
-          {/* Time Period Filter */}
-          <div className="relative">
-            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={timePeriod || ''}
-              onChange={(e) => {
-                setTimePeriod(e.target.value ? parseInt(e.target.value) : undefined);
-                setPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 appearance-none cursor-pointer"
-            >
-              <option value="">All Time</option>
-              <option value="30">Last 30 Days</option>
-              <option value="60">Last 60 Days</option>
-              <option value="90">Last 90 Days</option>
-            </select>
+            {/* Time Period Filter */}
+            <div className="relative">
+              <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={timePeriod || ""}
+                onChange={(e) => {
+                  setTimePeriod(
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  );
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 appearance-none cursor-pointer"
+              >
+                <option value="">All Time</option>
+                <option value="30">Last 30 Days</option>
+                <option value="60">Last 60 Days</option>
+                <option value="90">Last 90 Days</option>
+              </select>
+            </div>
           </div>
+        </GlassCard>
 
-          {/* Skills Filter */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Filter by skills (comma-separated)..."
-              value={skillsFilter}
-              onChange={(e) => {
-                setSkillsFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-            />
-          </div>
+        {/* Skills Filter with Autocomplete - Outside GlassCard for proper z-index */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-4 shadow-sm">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Filter by Skills
+          </label>
+          <SkillMultiSelect
+            selectedSkills={selectedSkills}
+            onChange={(newSkills) => {
+              setSelectedSkills(newSkills);
+              setPage(1);
+            }}
+            placeholder="Type to search and select skills..."
+            showAddButton={false}
+          />
         </div>
 
         {/* Active Filters Display */}
-        {(timePeriod || skills) && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {timePeriod && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                <Clock className="w-3 h-3 mr-1" />
-                {getTimePeriodLabel(timePeriod)}
-              </span>
-            )}
-            {skills && skills.length > 0 && skills.map((skill, idx) => (
-              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                {skill}
-              </span>
-            ))}
+        {timePeriod && (
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              <Clock className="w-3 h-3 mr-1" />
+              {getTimePeriodLabel(timePeriod)}
+            </span>
           </div>
         )}
-      </GlassCard>
+      </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
+        <div className="flex justify-center items-center py-12 z-[9999]">
           <LoadingSpinner />
         </div>
       )}
@@ -131,7 +131,7 @@ const Regions: React.FC = () => {
       {/* Regions Table */}
       {!isLoading && data && (
         <>
-          <GlassCard className="overflow-hidden">
+          <GlassCard hover={false} className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -194,18 +194,23 @@ const Regions: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {region.top_companies && region.top_companies.length > 0 ? (
-                            region.top_companies.slice(0, 3).map((company, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-                              >
-                                <Building2 className="w-3 h-3 mr-1" />
-                                {company.name} ({company.job_count})
-                              </span>
-                            ))
+                          {region.top_companies &&
+                          region.top_companies.length > 0 ? (
+                            region.top_companies
+                              .slice(0, 3)
+                              .map((company, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                                >
+                                  <Building2 className="w-3 h-3 mr-1" />
+                                  {company.name} ({company.job_count})
+                                </span>
+                              ))
                           ) : (
-                            <span className="text-sm text-gray-500 dark:text-gray-400">N/A</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              N/A
+                            </span>
                           )}
                         </div>
                       </td>
@@ -222,9 +227,18 @@ const Regions: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   No regions found
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your filters or search query
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  {selectedSkills.length > 0
+                    ? `No regions have jobs matching the selected skill${
+                        selectedSkills.length > 1 ? "s" : ""
+                      }: ${selectedSkills.join(", ")}`
+                    : "Try adjusting your filters or search query"}
                 </p>
+                {selectedSkills.length > 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                    Try removing some skills or changing the time period filter
+                  </p>
+                )}
               </div>
             )}
           </GlassCard>
@@ -233,7 +247,8 @@ const Regions: React.FC = () => {
           {data.total > 0 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, data.total)} of {data.total} regions
+                Showing {(page - 1) * limit + 1} to{" "}
+                {Math.min(page * limit, data.total)} of {data.total} regions
               </div>
               <div className="flex gap-2">
                 <button
