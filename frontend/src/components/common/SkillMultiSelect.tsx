@@ -18,6 +18,7 @@ export const SkillMultiSelect: React.FC<Props> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [hasSearched, setHasSearched] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close suggestions when clicking outside
@@ -36,20 +37,24 @@ export const SkillMultiSelect: React.FC<Props> = ({
     const searchTimeout = setTimeout(async () => {
       if (input.length >= 2) {
         setIsSearching(true);
+        setHasSearched(false);
         try {
           const results = await searchSkills(input, undefined, 10);
           setSuggestions(results);
           setShowSuggestions(true);
           setSelectedIndex(-1);
+          setHasSearched(true);
         } catch (error) {
           console.error('Search failed:', error);
           setSuggestions([]);
+          setHasSearched(true);
         } finally {
           setIsSearching(false);
         }
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
+        setHasSearched(false);
       }
     }, 300);
 
@@ -63,6 +68,7 @@ export const SkillMultiSelect: React.FC<Props> = ({
       setInput('');
       setSuggestions([]);
       setShowSuggestions(false);
+      setHasSearched(false);
     }
   };
 
@@ -135,20 +141,25 @@ export const SkillMultiSelect: React.FC<Props> = ({
 
           {/* No results message */}
           {showSuggestions && !isSearching && input.length >= 2 && suggestions.length === 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4">
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">
-                  No skills found. You can still add "{input}" or try a different search.
-                </span>
+            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-600 rounded-lg shadow-lg p-4">
+              <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium mb-1">No skills found in database</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Please check spelling or try a different skill name. Only skills from our database can be added.
+                  </p>
+                </div>
               </div>
             </div>
           )}
         </div>
         <button 
+          type="button"
           onClick={() => handleAdd()} 
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          disabled={!input.trim()}
+          disabled={!input.trim() || (hasSearched && suggestions.length === 0) || isSearching}
+          title={hasSearched && suggestions.length === 0 ? "No matching skills found. Please select from suggestions." : "Add skill"}
         >
           Add
         </button>

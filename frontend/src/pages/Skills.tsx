@@ -151,19 +151,19 @@ const Skills: React.FC = () => {
                 {/* Tab Navigation */}
                 <div className="border-b border-gray-200 dark:border-gray-700">
                     <div className="flex space-x-1">
-                        <button onClick={() => handleTabChange('categories')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'categories' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                        <button type="button" onClick={() => handleTabChange('categories')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'categories' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                             <span className="flex items-center gap-2">
                                 <span>📊</span>
                                 <span>Browse by Categories</span>
                             </span>
                         </button>
-                        <button onClick={() => handleTabChange('top-skills')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'top-skills' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                        <button type="button" onClick={() => handleTabChange('top-skills')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'top-skills' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                             <span className="flex items-center gap-2">
                                 <span>🎯</span>
                                 <span>Top Skills</span>
                             </span>
                         </button>
-                        <button onClick={() => handleTabChange('combinations')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'combinations' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                        <button type="button" onClick={() => handleTabChange('combinations')} className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'combinations' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                             <span className="flex items-center gap-2">
                                 <span>🔗</span>
                                 <span>Skill Combinations</span>
@@ -260,6 +260,7 @@ const Skills: React.FC = () => {
                                                     {/* View All button */}
                                                     {cat.skills.length > 5 && (
                                                         <button
+                                                            type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setCategoryModal({
@@ -352,8 +353,8 @@ const Skills: React.FC = () => {
                         {activeTab === 'combinations' && (
                             <div className="animate-fadeIn space-y-6">
                                 {/* Skill Recommender Tool */}
-                                <GlassCard>
-                                    <div className="p-6">
+                                <GlassCard hover={false}>
+                                    <div className="p-0">
                                         <div className="flex items-center gap-2 mb-4">
                                             <Lightbulb className="text-yellow-600" />
                                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">What Should I Learn Next?</h2>
@@ -366,7 +367,7 @@ const Skills: React.FC = () => {
                                             <SkillMultiSelect selectedSkills={knownSkills} onChange={setKnownSkills} placeholder="Type to add skills (e.g., Python, SQL, React)" />
                                         </div>
 
-                                        <button onClick={handleGetRecommendations} disabled={knownSkills.length === 0 || isLoadingRecommendations} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                                        <button type="button" onClick={handleGetRecommendations} disabled={knownSkills.length === 0 || isLoadingRecommendations} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
                                             {isLoadingRecommendations ? 'Getting Recommendations...' : 'Get Recommendations'}
                                         </button>
 
@@ -433,7 +434,7 @@ const Skills: React.FC = () => {
                                 {/* Popular Skill Combinations */}
                                 {skillPairs && skillPairs.length > 0 && (
                                     <GlassCard>
-                                        <div className="p-6">
+                                        <div className="p-0">
                                             <div className="flex items-center gap-2 mb-4">
                                                 <Link2 className="text-purple-600" />
                                                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Popular Skill Combinations</h3>
@@ -447,18 +448,18 @@ const Skills: React.FC = () => {
 
                                                     return (
                                                         <div key={`${pair.skill1}-${pair.skill2}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                                <span className="text-sm font-medium text-gray-400 dark:text-gray-500 w-6 flex-shrink-0">{index + 1}</span>
-                                                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                    <button onClick={() => navigate(`/skills/${pair.skill1.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')}`)} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium capitalize truncate">
-                                                                        {pair.skill1}
-                                                                    </button>
-                                                                    <Zap className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                                                    <button onClick={() => navigate(`/skills/${pair.skill2.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')}`)} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium capitalize truncate">
-                                                                        {pair.skill2}
-                                                                    </button>
+                                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                    <span className="text-sm font-medium text-gray-400 dark:text-gray-500 w-6 flex-shrink-0">{index + 1}</span>
+                                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                        <button type="button" onClick={() => navigate(`/skills/${pair.skill1.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')}`)} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium capitalize truncate">
+                                                                            {pair.skill1}
+                                                                        </button>
+                                                                        <Zap className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                                                        <button type="button" onClick={() => navigate(`/skills/${pair.skill2.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')}`)} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium capitalize truncate">
+                                                                            {pair.skill2}
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
                                                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${strengthColor}`}>{pair.strength}</span>
                                                                 <div className="text-right">
@@ -473,7 +474,7 @@ const Skills: React.FC = () => {
 
                                             {/* View Comparison Link */}
                                             <div className="mt-6 text-center">
-                                                <button onClick={() => navigate('/skills/compare')} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all font-medium shadow-md hover:shadow-lg">
+                                                <button type="button" onClick={() => navigate('/skills/compare')} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all font-medium shadow-md hover:shadow-lg">
                                                     Compare Skills Side-by-Side
                                                 </button>
                                             </div>
@@ -508,7 +509,7 @@ const Skills: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => setCategoryModal(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Close">
+                            <button type="button" onClick={() => setCategoryModal(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Close">
                                 <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
