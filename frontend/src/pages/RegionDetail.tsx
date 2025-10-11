@@ -56,14 +56,6 @@ const RegionDetail: React.FC = () => {
     return `$${Math.round(salary).toLocaleString()}`;
   };
 
-  const getTimePeriodLabel = (days?: number) => {
-    if (!days) return 'All Time';
-    if (days === 30) return 'Last 30 Days';
-    if (days === 60) return 'Last 60 Days';
-    if (days === 90) return 'Last 90 Days';
-    return `Last ${days} Days`;
-  };
-
   if (regionLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -92,7 +84,7 @@ const RegionDetail: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-start gap-4">
           <button
             onClick={() => navigate('/regions')}
@@ -114,59 +106,45 @@ const RegionDetail: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Filters */}
-      <div className="space-y-4">
-        <GlassCard hover={false} className="p-0">
-          <div className="relative">
-            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={timePeriod || ''}
-              onChange={(e) => {
-                setTimePeriod(e.target.value ? parseInt(e.target.value) : undefined);
-                setJobsPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 appearance-none cursor-pointer"
-            >
-              <option value="">All Time</option>
-              <option value="30">Last 30 Days</option>
-              <option value="60">Last 60 Days</option>
-              <option value="90">Last 90 Days</option>
-            </select>
-          </div>
-        </GlassCard>
-
-        {/* Skills Filter with Autocomplete - Outside GlassCard for proper z-index */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-4 shadow-sm">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Filter by Skills
-          </label>
-          <SkillMultiSelect
-            selectedSkills={selectedSkills}
-            onChange={(newSkills) => {
-              setSelectedSkills(newSkills);
+        
+        {/* Time Period Filter in Header */}
+        <div className="relative min-w-[200px]">
+          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <select
+            value={timePeriod || ''}
+            onChange={(e) => {
+              setTimePeriod(e.target.value ? parseInt(e.target.value) : undefined);
               setJobsPage(1);
             }}
-            placeholder="Type to search and select skills..."
-            showAddButton={false}
-          />
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 appearance-none cursor-pointer"
+          >
+            <option value="">All Time</option>
+            <option value="30">Last 30 Days</option>
+            <option value="60">Last 60 Days</option>
+            <option value="90">Last 90 Days</option>
+          </select>
         </div>
+      </div>
 
-        {/* Active Filters Display */}
-        {timePeriod && (
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              <Clock className="w-3 h-3 mr-1" />
-              {getTimePeriodLabel(timePeriod)}
-            </span>
-          </div>
-        )}
+      {/* Skills Filter */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-4 shadow-sm">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Filter by Skills
+        </label>
+        <SkillMultiSelect
+          selectedSkills={selectedSkills}
+          onChange={(newSkills) => {
+            setSelectedSkills(newSkills);
+            setJobsPage(1);
+          }}
+          placeholder="Type to search and select skills..."
+          showAddButton={false}
+        />
       </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <GlassCard className="p-6">
+        <GlassCard className="p-0">
           <div className="flex items-center justify-between mb-2">
             <Briefcase className="w-8 h-8 text-green-500" />
             <TrendingUp className="w-5 h-5 text-green-500" />
@@ -180,7 +158,7 @@ const RegionDetail: React.FC = () => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6">
+        <GlassCard className="p-0">
           <div className="flex items-center justify-between mb-2">
             <DollarSign className="w-8 h-8 text-blue-500" />
           </div>
@@ -193,7 +171,7 @@ const RegionDetail: React.FC = () => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6">
+        <GlassCard className="p-0">
           <div className="flex items-center justify-between mb-2">
             <Building2 className="w-8 h-8 text-purple-500" />
           </div>
@@ -209,7 +187,7 @@ const RegionDetail: React.FC = () => {
 
       {/* Top Companies */}
       {companiesData && companiesData.companies.length > 0 && (
-        <GlassCard className="p-6">
+        <GlassCard className="p-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Building2 className="w-6 h-6 text-purple-500" />
             Top Hiring Companies
@@ -258,7 +236,7 @@ const RegionDetail: React.FC = () => {
       )}
 
       {/* Recent Jobs */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-0">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <Briefcase className="w-6 h-6 text-green-500" />
           Recent Jobs
