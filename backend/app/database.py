@@ -10,10 +10,10 @@ This module provides:
 
 import os
 from pathlib import Path
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.exc import OperationalError, DisconnectionError
 import logging
 
 # Load environment variables from .env file if it exists
@@ -57,11 +57,29 @@ engine = create_engine(
     DATABASE_URL,
     echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",  # Log SQL queries in debug mode
     pool_pre_ping=True,  # Verify connections before use
-    pool_recycle=300,    # Recycle connections every 5 minutes
+    pool_recycle=3600,    # Recycle connections every 5 minutes
     pool_size=10,        # Connection pool size
-    max_overflow=20,     # Additional connections beyond pool_size
+    max_overflow=10,     # Additional connections beyond pool_size
     connect_args=connect_args  # Pass connection arguments to psycopg2
 )
+
+# Add connection error handling
+@event.listens_for(engine, "connect")
+def receive_connect(dbapi_conn, connection_record):
+    """Handle new connections"""
+    logger.debug("New database connection established")
+
+@event.listens_for(engine, "checkout")
+def receive_checkout(dbapi_conn, connection_record, connection_proxy):
+    """Verify connection is alive before using it"""
+    try:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+    except OperationalError as e:
+        # Connection is dead, invalidate it so pool creates a new one
+        logger.warning(f"Stale connection detected, invalidating: {e}")
+        raise DisconnectionError()
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
