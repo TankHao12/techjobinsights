@@ -203,7 +203,7 @@ const SkillDetail: React.FC = () => {
             </div>
 
             {/* Navigation */}
-            <GlassCard>
+            {/* <GlassCard>
                 <div className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Explore More</h3>
                     <div className="flex flex-wrap gap-3">
@@ -218,7 +218,7 @@ const SkillDetail: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            </GlassCard>
+            </GlassCard> */}
         </div>
     );
 };
