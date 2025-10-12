@@ -10,38 +10,40 @@
 ### Key Features
 
 -   **Intelligent Job Scraping**: Automated collection from Seek.co.nz with advanced parsing
--   **AI-Powered NLP Processing**: spaCy-based text analysis for skill extraction and job classification
+-   **AI-Powered NLP Processing**: spaCy-based text analysis for skill extraction and job classification (90+ tech skills)
 -   **Real-time Analytics Dashboard**: Interactive visualizations of market trends and statistics
--   **Skills Intelligence**: Track trending technologies and in-demand skills
+-   **Skills Intelligence**: Track trending technologies, compare skills, and analyze demand patterns
+-   **Regional Insights**: Comprehensive analysis of job markets across New Zealand regions
 -   **Company Insights**: Company hiring patterns and job posting analysis
 -   **Salary Analytics**: Salary ranges and compensation insights
--   **Modern UI/UX**: Responsive React interface with dark mode support
+-   **Multi-Skill Comparison**: Compare up to 3 skills side-by-side with detailed analytics
+-   **Tracked Keywords Transparency**: View all monitored skills and search terms
+-   **Automated Daily Updates**: GitHub Actions workflow for fresh data (2 AM NZDT)
+-   **Modern UI/UX**: Responsive React interface with Tailwind CSS and dark mode support
 
 ### Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (React + TS)                    │
-│  Dashboard | Skills Analytics | Companies | Job Search       │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ REST API
-┌─────────────────────────▼───────────────────────────────────┐
-│                  Backend API (FastAPI)                       │
-│  Jobs | Skills | Analytics | Companies | Categories          │
-└─────────┬──────────────────────────┬────────────────────────┘
-          │                          │
-    ┌─────▼─────┐            ┌───────▼────────┐
-    │  Scrapers  │            │  NLP Engine    │
-    │  (Seek.nz) │            │  (spaCy)       │
-    └─────┬──────┘            └───────┬────────┘
-          │                           │
-          └────────────┬──────────────┘
-                       ▼
-          ┌────────────────────────┐
-          │  PostgreSQL Database   │
-          │  Raw Jobs → Processed  │
-          └────────────────────────┘
-```
+The platform follows a modern three-tier architecture with automated data collection:
+
+#### System Architecture
+
+![System Architecture](ERD/System_Architecture.png)
+
+The system consists of four main tiers:
+- **Presentation Tier**: React 18 + TypeScript frontend with Recharts visualizations
+- **Application Tier**: FastAPI backend with NLP processing and business logic
+- **Data Tier**: Supabase PostgreSQL database with normalized schema
+- **Automation Tier**: GitHub Actions for daily job scraping and processing
+
+#### Deployment Architecture
+
+![Deployment Architecture](ERD/Deployment_Architecture.png)
+
+The application is deployed on Azure Cloud Infrastructure:
+- **Frontend**: Azure Static Web Apps (www.techjobinsights.me)
+- **Backend**: Azure Web App Service (Docker container)
+- **Database**: Supabase PostgreSQL 15 (managed service)
+- **Automation**: GitHub Actions workflows for CI/CD and daily updates
 
 ## Technology Stack
 
@@ -56,14 +58,15 @@
 
 ### Frontend
 
--   **Framework**: React 19 + TypeScript 5.8
--   **Build Tool**: Vite 7.1
+-   **Framework**: React 19.1 + TypeScript 5.8
+-   **Build Tool**: Vite 5.4
 -   **Routing**: React Router DOM 7.8
+-   **HTTP Client**: Axios 1.7
 -   **State Management**: Zustand 5.0, TanStack React Query 5.87
--   **UI Components**: Headless UI, Heroicons, Lucide React
--   **Styling**: Tailwind CSS (via utilities)
--   **Charts**: Recharts 3.2, Framer Motion 12.23
--   **Testing**: Vitest 1.6, Testing Library
+-   **UI Components**: Headless UI 2.2, Heroicons 2.2, Lucide React 0.542
+-   **Styling**: Tailwind CSS 3.4 with PostCSS
+-   **Charts & Visualization**: Recharts 3.2, React Three Fiber, Framer Motion 12.23
+-   **Testing**: Vitest 1.6, Testing Library, Axios Mock Adapter
 
 ### Infrastructure & DevOps
 
@@ -97,7 +100,10 @@
 ### 1. Clone the Repository
 
 ```bash
+# Clone the repository
 git clone https://github.com/COMP693-Projects-25S2/COMP693_25S2_project__Tan_1162169.git
+
+# Navigate to project directory
 cd COMP693_25S2_project__Tan_1162169
 ```
 
@@ -162,10 +168,16 @@ npm run dev
 
 ### 4. Access the Application
 
--   **Frontend**: http://localhost:5173
+-   **Frontend**: http://localhost:3000
 -   **Backend API**: http://localhost:8000
 -   **API Docs**: http://localhost:8000/docs
 -   **Database**: localhost:5432 (postgres/password)
+
+### 5. Production Deployment
+
+-   **Frontend**: https://www.techjobinsights.me
+-   **Backend API**: https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net
+-   **Database**: Supabase PostgreSQL 15 (managed)
 
 ## Project Structure
 
@@ -182,7 +194,9 @@ COMP693_25S2_project__Tan_1162169/
 │   │   │   ├── skills.py        # Skills analytics endpoints
 │   │   │   ├── analytics.py     # Dashboard & analytics
 │   │   │   ├── companies.py     # Company endpoints
-│   │   │   └── categories.py    # Job categories
+│   │   │   ├── categories.py    # Job categories
+│   │   │   ├── regions.py       # Regional insights
+│   │   │   └── operations.py    # Automation endpoints
 │   │   ├── processors/          # Data processing pipeline
 │   │   │   ├── nlp_engine.py    # spaCy NLP processing
 │   │   │   ├── data_pipeline.py # Job processing pipeline
@@ -221,17 +235,28 @@ COMP693_25S2_project__Tan_1162169/
 │   │   │   ├── Dashboard.tsx   # Main dashboard
 │   │   │   ├── Skills.tsx      # Skills analytics
 │   │   │   ├── SkillDetail.tsx # Skill details
+│   │   │   ├── SkillComparison.tsx # Multi-skill comparison
 │   │   │   ├── Companies.tsx   # Companies list
+│   │   │   ├── CompanyDetail.tsx # Company details
+│   │   │   ├── Regions.tsx     # Regional insights
+│   │   │   ├── RegionDetail.tsx # Region details
+│   │   │   ├── TrackedKeywords.tsx # Skills taxonomy
 │   │   │   └── About.tsx       # About page
 │   │   ├── components/         # Reusable components
 │   │   │   ├── layout/         # Layout components
 │   │   │   ├── common/         # Common UI components
+│   │   │   │   ├── GlassCard.tsx # Glass morphism cards
+│   │   │   │   ├── SkillBadge.tsx # Skill badges
+│   │   │   │   └── SkillMultiSelect.tsx # Multi-select
 │   │   │   ├── charts/         # Chart components
 │   │   │   └── dashboard/      # Dashboard widgets
 │   │   ├── services/           # API service layer
 │   │   │   ├── api.ts          # Base API client
 │   │   │   ├── dashboardService.ts
-│   │   │   └── skillsService.ts
+│   │   │   ├── skillsService.ts
+│   │   │   ├── companiesService.ts
+│   │   │   ├── regionsService.ts
+│   │   │   └── trackedKeywordsService.ts
 │   │   ├── types/              # TypeScript types
 │   │   ├── hooks/              # Custom React hooks
 │   │   ├── utils/              # Utility functions
@@ -253,6 +278,12 @@ COMP693_25S2_project__Tan_1162169/
 ```
 
 ## Database Schema
+
+### Entity Relationship Diagram
+
+![Database ERD](ERD/Current_Database_ERD.png)
+
+The database follows a normalized relational schema with the following structure:
 
 ### Core Tables
 
@@ -387,6 +418,27 @@ GET    /api/v1/companies/{id}/jobs # Company jobs
 GET    /api/v1/categories          # List categories
 ```
 
+### Regions
+
+```
+GET    /api/v1/regions/with-stats             # List regions with statistics
+GET    /api/v1/regions/{location_id}/details  # Region details
+GET    /api/v1/regions/{location_id}/jobs     # Jobs in region
+GET    /api/v1/regions/{location_id}/skills   # Top skills in region
+GET    /api/v1/regions/{location_id}/companies # Top companies in region
+```
+
+### Operations (Automation)
+
+```
+POST   /api/v1/operations/daily-update   # Run complete daily update
+POST   /api/v1/operations/scrape         # Scrape new jobs
+POST   /api/v1/operations/process-nlp    # Process jobs with NLP
+POST   /api/v1/operations/check-urls     # Check job URL validity
+GET    /api/v1/operations/verify-data    # Verify data quality
+GET    /api/v1/operations/status         # System status
+```
+
 ## Frontend Features
 
 ### Pages
@@ -397,6 +449,7 @@ GET    /api/v1/categories          # List categories
     - Trending skills widget
     - Recent jobs feed
     - Popular companies
+    - Interactive charts
 
 2. **Skills Analytics** (`/skills`)
 
@@ -404,6 +457,7 @@ GET    /api/v1/categories          # List categories
     - Category filtering
     - Job count per skill
     - Growth trends
+    - Time-based filtering
 
 3. **Skill Detail** (`/skills/:skillName`)
 
@@ -411,17 +465,59 @@ GET    /api/v1/categories          # List categories
     - Related jobs
     - Salary insights
     - Related skills
+    - Historical trends
 
-4. **Companies** (`/companies`)
+4. **Skill Comparison** (`/skills/compare`)
+
+    - Side-by-side skill comparison
+    - Demand trends visualization
+    - Salary comparisons
+    - Top hiring companies per skill
+    - Compare up to 3 skills simultaneously
+
+5. **Companies** (`/companies`)
 
     - Company listings
     - Hiring activity
     - Job counts
+    - Search and filtering
 
-5. **Company Detail** (`/companies/:id`)
+6. **Company Detail** (`/companies/:id`)
+
     - Company profile
     - Active job postings
     - Hiring patterns
+    - Skill requirements
+
+7. **Regional Insights** (`/regions`)
+
+    - NZ regional job market analysis
+    - Jobs by city and region
+    - Regional salary trends
+    - Top companies per region
+    - Skill filtering by region
+
+8. **Region Detail** (`/regions/:id`)
+
+    - Region-specific statistics
+    - Top skills in demand
+    - Major employers
+    - Salary ranges
+    - Job growth trends
+
+9. **Tracked Keywords** (`/tracked-keywords`)
+
+    - Skills taxonomy transparency
+    - Search terms used for scraping
+    - Skills categorization
+    - Data collection methodology
+    - 90+ monitored tech skills
+
+10. **About** (`/about`)
+    - Platform information
+    - Project methodology
+    - Technology stack
+    - Data sources
 
 ### UI Features
 
@@ -474,6 +570,35 @@ print(f'Processed {stats.processed_jobs} jobs')
 
 ### Automated Operations
 
+#### Via API Endpoints (Recommended for Production)
+
+The platform provides REST API endpoints for all automation tasks:
+
+```bash
+# Trigger complete daily update via API
+curl -X POST https://techjobsinsights-api-a6gxgsffa9dtaad3.newzealandnorth-01.azurewebsites.net/api/v1/operations/daily-update
+
+# Or run individual operations
+curl -X POST .../api/v1/operations/scrape          # Scrape new jobs
+curl -X POST .../api/v1/operations/process-nlp     # Process with NLP
+curl -X POST .../api/v1/operations/check-urls      # Verify job URLs
+curl -X GET  .../api/v1/operations/status          # Check system status
+```
+
+#### Via GitHub Actions (Production)
+
+The platform runs automated daily updates at 2 AM NZDT:
+
+```bash
+# Manually trigger workflow (with GitHub CLI)
+gh workflow run daily-update.yml
+
+# View workflow runs
+gh run list --workflow=daily-update.yml
+```
+
+#### Local Python Scripts
+
 ```bash
 # Run complete daily update
 python backend/database/operations/daily_update.py
@@ -489,15 +614,16 @@ python backend/database/operations/run_nlp_pipeline.py    # Process jobs
 
 The `nlp_engine.py` module provides:
 
--   **70+ Tech Skills** across 8 categories:
-    -   Programming Languages (Python, JavaScript, Java, etc.)
-    -   Web Frameworks (React, Angular, Django, etc.)
-    -   Databases (PostgreSQL, MongoDB, Redis, etc.)
-    -   Cloud Platforms (AWS, Azure, GCP)
-    -   DevOps Tools (Docker, Kubernetes, Jenkins)
-    -   AI/ML (TensorFlow, PyTorch, scikit-learn)
-    -   Mobile (iOS, Android, React Native)
-    -   Testing Tools (Selenium, Jest, Pytest)
+-   **90+ Tech Skills** across 9 categories:
+    -   **Programming Languages**: Python, JavaScript, Java, C#, C++, TypeScript, PHP, Ruby, Go, Rust, Scala, Kotlin, Swift, R, Perl
+    -   **Web Frameworks**: React, Angular, Vue.js, Django, Flask, FastAPI, Spring, Laravel, Rails, Express.js, Node.js, ASP.NET, Next.js, Svelte
+    -   **Databases**: PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, SQL Server, Oracle, Cassandra, DynamoDB, Neo4j, MariaDB, Cosmos DB
+    -   **Cloud Platforms**: AWS, Azure, GCP, Google Cloud, DigitalOcean, Heroku, Vercel, Netlify, Cloudflare, Firebase
+    -   **DevOps Tools**: Docker, Kubernetes, Jenkins, GitLab, GitHub Actions, Terraform, Ansible, Chef, Puppet, Helm, Prometheus, Grafana
+    -   **AI/ML**: TensorFlow, PyTorch, Machine Learning, Deep Learning, NLP, Computer Vision, Pandas, NumPy, scikit-learn, LLM, Data Science
+    -   **Mobile Development**: iOS, Android, React Native, Flutter, Xamarin, Swift, Kotlin
+    -   **Testing Tools**: Selenium, Cypress, Jest, JUnit, Pytest, Mocha, Postman, JMeter, Cucumber, Appium
+    -   **Tools & Methodologies**: Git, Linux, Bash, PowerShell, REST API, GraphQL, Microservices, Agile, Scrum, Jira, Webpack
 -   **Advanced Parsing**:
     -   Salary extraction with confidence scores
     -   Employment type classification
@@ -509,12 +635,14 @@ The `nlp_engine.py` module provides:
 
 The `seek_scraper.py` implements:
 
--   **Multi-page scraping** with pagination
+-   **Multi-page scraping** with pagination support
 -   **Both normal and premium job cards** extraction
--   **Rate limiting** and respectful scraping
--   **Duplicate detection** via URL
--   **Comprehensive search terms** (40+ terms)
--   **Detailed metadata** extraction
+-   **Rate limiting** and respectful scraping practices
+-   **Duplicate detection** via URL comparison
+-   **Comprehensive search terms** (40+ tech-related search terms)
+-   **Detailed metadata** extraction (title, company, location, salary, description)
+-   **Error handling** and retry logic
+-   **Async support** for large scraping operations
 
 ### Database Management
 
@@ -593,37 +721,95 @@ netstat -ano | findstr :5173   # Windows
 -   Future: Add rate limiting to API endpoints
 -   Future: Implement API key authentication
 
+## Implemented Features (v1.0)
+
+### Core Functionality ✅
+
+-   [x] Intelligent job scraping from Seek NZ
+-   [x] NLP-powered skill extraction (90+ tech skills)
+-   [x] Real-time analytics dashboard
+-   [x] Multi-skill comparison tool
+-   [x] Regional insights across NZ
+-   [x] Company hiring patterns analysis
+-   [x] Skills taxonomy transparency
+-   [x] Automated daily updates (GitHub Actions)
+-   [x] CI/CD deployment to Azure
+-   [x] Production deployment (Supabase + Azure)
+-   [x] Responsive dark/light mode UI
+-   [x] Time-based filtering (30/60/90 days)
+
 ## Future Enhancements
 
 ### Phase 2 Features
 
 -   [ ] User accounts and saved searches
--   [ ] Email job alerts
+-   [ ] Email job alerts and notifications
 -   [ ] Salary trend predictions (ML)
+-   [ ] Resume matching and recommendations
 -   [ ] More job sources (Indeed, LinkedIn)
 -   [ ] Mobile app (React Native)
--   [ ] Employer dashboard
--   [ ] Resume matching
+-   [ ] Employer dashboard and analytics
+-   [ ] Advanced job search with filters
+-   [ ] Career path recommendations
 
 ### Technical Improvements
 
--   [ ] Redis caching layer
+-   [ ] Redis caching layer for performance
 -   [ ] Celery task queue for background jobs
--   [ ] Elasticsearch for advanced search
--   [ ] GraphQL API
+-   [ ] Elasticsearch for advanced full-text search
+-   [ ] GraphQL API endpoint
 -   [ ] Real-time WebSocket updates
--   [ ] CI/CD pipeline (GitHub Actions)
 -   [ ] Kubernetes deployment
+-   [ ] API rate limiting
+-   [ ] Advanced monitoring and alerting
 
 ## Documentation
 
-Additional documentation available in:
+### Project Documentation
 
--   `backend/README.md` - Backend development guide
--   `backend/database/README.md` - Database management
--   `backend/database/docs/` - Detailed database docs
--   `ERD/README.md` - Database schema diagrams
--   `REORGANIZATION_SUMMARY.md` - Project structure changes
+-   **Main Documentation**:
+    -   `README.md` (this file) - Complete project overview
+    -   `backend/README.md` - Backend development guide
+    -   `frontend/README.md` - Frontend development guide
+
+### Architecture & Design
+
+-   **ERD & Diagrams**:
+    -   `ERD/README.md` - Start here for architecture diagrams
+    -   `ERD/START_HERE.md` - Quick guide to diagrams
+    -   `ERD/ARCHITECTURE_SUMMARY.md` - Complete architecture documentation
+    -   `ERD/HOW_TO_USE_IN_REPORT.md` - Using diagrams in reports
+    -   Database ERD, System Architecture, Deployment Architecture (PNG files)
+
+### Database & Backend
+
+-   **Database**:
+    -   `backend/database/README.md` - Database management guide
+    -   `backend/database/docs/` - Detailed database documentation
+    -   `backend/database/deployment/` - Deployment guides (Supabase)
+    -   `backend/database/maintenance/` - Maintenance scripts
+
+-   **Backend Development**:
+    -   `backend/docs/AUTOMATION.md` - Automation system details
+    -   `backend/docs/AUTOMATION_SETUP.md` - Setup automation
+    -   `backend/docs/DATABASE.md` - Database guide
+    -   `backend/docs/FILE_ORGANIZATION.md` - Backend structure
+
+### Automation & CI/CD
+
+-   **GitHub Actions**:
+    -   `.github/GITHUB_ACTIONS_SETUP_GUIDE.md` - Complete setup guide
+    -   `.github/HOW_IT_WORKS.md` - Workflow explanation
+    -   `.github/QUICK_SECRETS_SETUP.md` - Quick secrets configuration
+    -   `AUTOMATION_SUMMARY.md` - Daily automation overview
+
+### Implementation Summaries
+
+-   `REGIONAL_INSIGHTS_IMPLEMENTATION_SUMMARY.md` - Regional features
+-   `TRACKED_KEYWORDS_IMPLEMENTATION.md` - Skills taxonomy
+-   `SKILLCOMPARISON_FIX_SUMMARY.md` - Skill comparison feature
+-   `COMPANIES_PAGE_IMPROVEMENTS.md` - Companies page updates
+-   `TAILWIND_MIGRATION_COMPLETE.md` - Frontend styling update
 
 ## Contributing
 
@@ -657,22 +843,37 @@ This project is part of COMP693 Industrial Project at Lincoln University.
 
 For questions or issues:
 
-1. Check documentation in `/docs` folders
+1. Check documentation in `/docs` folders and `ERD/` directory
 2. Review common issues section above
-3. Check API documentation at `/docs` endpoint
-4. Review migration summaries in root directory
+3. Check API documentation at `/docs` endpoint (http://localhost:8000/docs)
+4. Review implementation summaries in root directory
+5. View GitHub Actions logs for automation issues
+6. Check `.github/` directory for workflow documentation
+
+**Repository**: https://github.com/COMP693-Projects-25S2/COMP693_25S2_project__Tan_1162169
 
 ## Acknowledgments
 
--   **spaCy** - Natural language processing
+-   **spaCy** - Natural language processing engine
 -   **FastAPI** - Modern Python web framework
 -   **React** - Frontend framework
--   **PostgreSQL** - Reliable database
--   **Seek.co.nz** - Job data source
--   **Lincoln University** - Educational support
+-   **PostgreSQL** - Reliable database system
+-   **Azure** - Cloud hosting infrastructure (Static Web Apps, App Service)
+-   **Supabase** - Managed PostgreSQL database hosting
+-   **GitHub Actions** - CI/CD and automation platform
+-   **Tailwind CSS** - Utility-first CSS framework
+-   **Recharts** - React charting library
+-   **Seek.co.nz** - Primary job data source
+-   **Lincoln University** - Educational support and guidance
 
 ---
 
 **Last Updated**: January 2025  
-**Version**: 1.0.0 (MVP)  
-**Status**: Active Development
+**Version**: 1.0.0 (Production)  
+**Status**: Live & Operational
+
+**Deployment**:
+- Frontend: Azure Static Web Apps (www.techjobinsights.me)
+- Backend: Azure Web App Service (Docker)
+- Database: Supabase PostgreSQL 15
+- Automation: GitHub Actions (Daily at 2 AM NZDT)
