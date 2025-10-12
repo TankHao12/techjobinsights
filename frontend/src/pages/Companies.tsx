@@ -9,13 +9,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Search, Code2, TrendingUp } from 'lucide-react';
 import { getCompanies, getCompaniesByTech } from '../services/companiesService';
+import { searchSkills } from '../services/skillsService';
 import { LoadingSpinner } from '../components/common';
 import { GlassCard } from '../components/common/GlassCard';
+import type { SkillWithStats } from '../types';
 
 const Companies: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [techSearch, setTechSearch] = useState('');
+  const [techSearchResults, setTechSearchResults] = useState<SkillWithStats[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'all' | 'bytech'>('all');
   const limit = 20;
@@ -29,7 +34,7 @@ const Companies: React.FC = () => {
   const { data: techCompanies, isLoading: techLoading } = useQuery({
     queryKey: ['companiesByTech', techSearch],
     queryFn: () => getCompaniesByTech(techSearch),
-    enabled: activeTab === 'bytech' && techSearch.length > 0,
+    enabled: activeTab === 'bytech' && techSearch.length > 0 && !showDropdown,
   });
 
   // Temporarily disabled top companies query
@@ -37,6 +42,34 @@ const Companies: React.FC = () => {
   //   queryKey: ['topCompanies'],
   //   queryFn: () => getPopularCompaniesAutocomplete(10),
   // });
+
+  // Search for technologies as user types
+  const handleTechSearch = async (query: string) => {
+    if (query.length < 2) {
+      setTechSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowDropdown(true);
+    try {
+      const results = await searchSkills(query, undefined, 10);
+      setTechSearchResults(results);
+    } catch (error) {
+      console.error('Technology search failed:', error);
+      setTechSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Select a technology from dropdown
+  const selectTechnology = (skillName: string) => {
+    setTechSearch(skillName);
+    setShowDropdown(false);
+    setTechSearchResults([]);
+  };
 
   return (
     <div className="space-y-6">
@@ -99,16 +132,66 @@ const Companies: React.FC = () => {
           />
         </div>
       ) : (
-        <div className="relative">
-          <Code2 className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Enter technology name (e.g., React, Python, AWS)..."
-            value={techSearch}
-            onChange={(e) => setTechSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-          />
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="space-y-2">
+          <div className="relative">
+            <Code2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search for technology (e.g., React, Python, AWS)..."
+              value={techSearch}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTechSearch(value);
+                handleTechSearch(value);
+              }}
+              onFocus={() => {
+                if (techSearch.length >= 2 && techSearchResults.length > 0) {
+                  setShowDropdown(true);
+                }
+              }}
+              onBlur={() => {
+                // Delay to allow click on dropdown items
+                setTimeout(() => setShowDropdown(false), 200);
+              }}
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+            />
+
+            {/* Search Results Dropdown */}
+            {showDropdown && (techSearchResults.length > 0 || isSearching) && (
+              <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {isSearching ? (
+                  <div className="p-4 text-center">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : (
+                  techSearchResults.map((skill) => (
+                    <button
+                      key={skill.name}
+                      onClick={() => selectTechnology(skill.name)}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="capitalize text-gray-900 dark:text-gray-100 font-medium">
+                            {skill.name}
+                          </span>
+                          {skill.percentage && (
+                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                              {skill.percentage.toFixed(1)}% of jobs
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {skill.job_count} {skill.job_count === 1 ? 'job' : 'jobs'}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Find companies that are using a specific technology in their job postings
           </p>
         </div>
@@ -196,7 +279,7 @@ const Companies: React.FC = () => {
                     (tech) => (
                       <button
                         key={tech}
-                        onClick={() => setTechSearch(tech)}
+                        onClick={() => selectTechnology(tech)}
                         className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                       >
                         {tech}
@@ -204,6 +287,18 @@ const Companies: React.FC = () => {
                     )
                   )}
                 </div>
+              </div>
+            </GlassCard>
+          ) : showDropdown ? (
+            <GlassCard>
+              <div className="p-8 text-center">
+                <Code2 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Select a Technology
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Choose a technology from the dropdown above to see companies using it
+                </p>
               </div>
             </GlassCard>
           ) : techLoading ? (
