@@ -1,0 +1,624 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5" pages="4">
+  <diagram id="3TierArchitecture" name="1. Three-Tier Architecture">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="794" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title1" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;TechJobInsights.me - Three-Tier Architecture&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=30;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="95" y="20" width="600" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="presentationTier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="60" y="80" width="670" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="presentationTitle" value="PRESENTATION TIER" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="295" y="82" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="presentationSubtitle" value="React 18 + TypeScript Frontend (Azure Static Web Apps)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="195" y="110" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="reactSPA" value="&lt;font&gt;React SPA&lt;br&gt;TypeScript&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="101" y="134" width="135" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="tailwind" value="Tailwind CSS&#xa;Responsive UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="403" y="134" width="135" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="recharts" value="Recharts&#xa;Data Visualization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="252" y="134" width="135" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="pages" value="Pages: Dashboard,&#xa;Skills, Companies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="553.5" y="134" width="140" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" value="HTTPS / REST API" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;fontSize=16;fontStyle=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" edge="1" target="applicationTier" source="presentationTier">
+          <mxGeometry x="-0.1636" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="395" y="240" as="sourcePoint" />
+            <mxPoint x="395" y="280" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="applicationTier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="60" y="245" width="670" height="275" as="geometry" />
+        </mxCell>
+        <mxCell id="applicationTitle" value="APPLICATION TIER" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="295" y="250" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="applicationSubtitle" value="FastAPI Backend (Azure App Service - Python 3.11)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="195" y="278" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="apiRoutersBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF6B35;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="303" width="630" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="apiRoutersTitle" value="API Routers (FastAPI)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="95" y="302" width="200" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="routerJobs" value="/jobs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="95" y="329" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="routerAnalytics" value="/analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="275" y="329" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="routerOperations" value="/operations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="455" y="329" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="routerCompanies" value="/companies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="95" y="361" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="routerSkills" value="/skills" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="275" y="361" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="routerCategories" value="/categories" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="1" vertex="1">
+          <mxGeometry x="455" y="361" width="170" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" value="SQLAlchemy ORM" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#00AA88;fontSize=16;fontStyle=1;exitX=0.503;exitY=0.999;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" parent="1" edge="1" target="dataTier" source="applicationTier">
+          <mxGeometry x="-0.1934" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="565" y="485" as="sourcePoint" />
+            <mxPoint x="410" y="560" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3" value="Web Scraping" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#9C27B0;fontSize=16;fontStyle=1;startArrow=none;startFill=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=-0.02;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" edge="1" target="dataTier" source="automationTier">
+          <mxGeometry x="-0.2594" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="395" y="748" as="sourcePoint" />
+            <mxPoint x="395" y="720" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KPAzKi3ians9av-6mFUi-2" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="117" y="397" width="560" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="businessLogicBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF6B35;strokeWidth=2;dashed=1;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry y="5" width="560" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="businessLogicTitle" value="Business Logic Layer" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#FF6B35;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="15" y="5" width="200" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="nlpEngine" value="NLP Engine&#xa;spaCy + Patterns" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="15" y="35" width="170" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="dataPipeline" value="Data Pipeline&#xa;ETL Orchestration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="195" y="35" width="170" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="crudServices" value="CRUD Services&#xa;DB Operations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="375" y="35" width="170" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="caching" value="Cache Layer&#xa;Query Optimization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="105" y="75" width="170" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="urlChecker" value="URL Checker&#xa;Job Validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF6B35;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-2" vertex="1">
+          <mxGeometry x="285" y="75" width="170" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="KPAzKi3ians9av-6mFUi-3" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="62" y="570" width="670" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="dataTier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=3;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry width="670" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="dataTierTitle" value="DATA TIER" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#00AA88;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="237" y="4" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dataTierSubtitle" value="Supabase PostgreSQL 15 (Managed)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#333333;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="137" y="32" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="tableRawJobs" value="raw_jobs&#xa;Scraped Data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="25" y="60" width="105" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tableJobs" value="jobs&#xa;Processed + NLP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="138.5" y="60" width="115" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tableCompanies" value="companies&#xa;Normalized Names" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="259" y="60" width="135" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tableLocations" value="locations&#xa;NZ Cities/Regions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="399" y="60" width="125" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tableCategories" value="categories&#xa;Job Classification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-3" vertex="1">
+          <mxGeometry x="532" y="60" width="115" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="KPAzKi3ians9av-6mFUi-4" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="62" y="740" width="670" height="118" as="geometry" />
+        </mxCell>
+        <mxCell id="automationTier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=3;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry width="670" height="118" as="geometry" />
+        </mxCell>
+        <mxCell id="automationTitle" value="AUTOMATION TIER" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#9C27B0;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="235" y="6" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="automationSubtitle" value="GitHub Actions (Daily at 2 AM NZDT)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#333333;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="135" y="36" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="step1" value="1. Scrape Jobs&#xa;seek_scraper.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="61" y="60" width="125" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="step2" value="2. Process NLP&#xa;data_pipeline.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="206" y="60" width="125" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="step3" value="3. Check URLs&#xa;url_checker.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="351" y="60" width="125" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="step4" value="4. Upload Logs&#xa;Azure Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;fontSize=13;" parent="KPAzKi3ians9av-6mFUi-4" vertex="1">
+          <mxGeometry x="497" y="60" width="115" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="DataPipeline" name="2. Data Processing Pipeline">
+    <mxGraphModel dx="1002" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title2" value="Data Processing Pipeline - End-to-End Flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="284.5" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="step1Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F7FF;strokeColor=#0066CC;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="100" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step1Number" value="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#0066CC;strokeColor=#0066CC;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="125" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step1Title" value="Web Scraping" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="110" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step1Detail" value="BeautifulSoup scrapes Seek.co.nz → Extract job title, company, location, description, salary&#xa;Technologies: BeautifulSoup4, Requests, Python 3.11&#xa;Output: Raw HTML + metadata (2-5KB per job)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="140" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_1" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="210" as="sourcePoint" />
+            <mxPoint x="585" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step2Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F7FF;strokeColor=#0066CC;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="260" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step2Number" value="2" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#0066CC;strokeColor=#0066CC;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="285" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step2Title" value="Raw Storage" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="270" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step2Detail" value="Store in PostgreSQL `raw_jobs` table → Raw text with metadata (id, url, scraped_at, processed flag)&#xa;Database: Supabase PostgreSQL 15&#xa;Status: Unprocessed (processed = FALSE)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="300" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_2" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="370" as="sourcePoint" />
+            <mxPoint x="585" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step3Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="420" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step3Number" value="3" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FF6B35;strokeColor=#FF6B35;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="445" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step3Title" value="NLP Processing - Layer 1: Pattern Matching" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="430" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step3Detail" value="Exact skill matches with high confidence (e.g., &#39;React&#39;, &#39;Python&#39;, &#39;PostgreSQL&#39;)&#xa;Method: Pre-defined skill dictionary (500+ tech skills)&#xa;Confidence: 0.9-1.0 | Speed: Fastest ⚡" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="460" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_3" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#FF6B35;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="530" as="sourcePoint" />
+            <mxPoint x="585" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step4Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="580" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step4Number" value="4" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FF6B35;strokeColor=#FF6B35;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="605" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step4Title" value="NLP Processing - Layer 2: SpaCy NER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="590" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step4Detail" value="Named Entity Recognition + POS tagging for technical terms (e.g., &#39;GraphQL API&#39;, &#39;Microservices&#39;)&#xa;Model: en_core_web_sm (spaCy 3.x)&#xa;Confidence: 0.6-0.9 | Speed: Medium 🔄" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="620" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_4" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#FF6B35;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="690" as="sourcePoint" />
+            <mxPoint x="585" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step5Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="740" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step5Number" value="5" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FF6B35;strokeColor=#FF6B35;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="765" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step5Title" value="NLP Processing - Layer 3: Context Validation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="750" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step5Detail" value="Check surrounding words, filter false positives (e.g., &#39;Java coffee&#39; → ❌, &#39;Java Developer&#39; → ✅)&#xa;Method: Window-based context analysis (±5 words)&#xa;Confidence: Adjusted -0.3 if suspicious | Speed: Slower 🐌" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="780" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_5" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#00AA88;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="850" as="sourcePoint" />
+            <mxPoint x="585" y="890" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step6Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="900" width="890" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="step6Number" value="6" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#00AA88;strokeColor=#00AA88;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="925" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step6Title" value="Skill Storage (JSONB)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="910" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step6Detail" value="Store extracted skills in JSONB → Array of {skill, confidence, extraction_method}&#xa;Table: jobs.extracted_skills (JSONB column)&#xa;Example: {&quot;languages&quot;: [&quot;Python&quot;, &quot;JavaScript&quot;], &quot;frameworks&quot;: [&quot;React&quot;, &quot;Django&quot;], &quot;cloud&quot;: [&quot;AWS&quot;]}&#xa;Index: GIN index on extracted_skills for fast queries" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="940" width="750" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_6" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#00AA88;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="1030" as="sourcePoint" />
+            <mxPoint x="585" y="1070" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step7Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="1080" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step7Number" value="7" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#00AA88;strokeColor=#00AA88;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="1105" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step7Title" value="Analytics Aggregation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1090" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step7Detail" value="SQL queries → Calculate skill frequencies, trends, correlations&#xa;Queries: jsonb_array_elements, COUNT, GROUP BY, window functions&#xa;Cached: Redis for frequently accessed aggregations" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1120" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_7" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="1190" as="sourcePoint" />
+            <mxPoint x="585" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step8Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="1240" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step8Number" value="8" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#0066CC;strokeColor=#0066CC;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="1265" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step8Title" value="API Layer (FastAPI)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1250" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step8Detail" value="FastAPI serves JSON → REST endpoints with pagination, filtering, sorting&#xa;Features: OpenAPI docs, async handlers, Pydantic validation&#xa;Endpoints: /jobs, /analytics/skills, /analytics/trends, /companies, /categories" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1280" width="750" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2_8" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="1350" as="sourcePoint" />
+            <mxPoint x="585" y="1390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="step9Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=3;align=left;" parent="1" vertex="1">
+          <mxGeometry x="140" y="1400" width="890" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step9Number" value="9" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#0066CC;strokeColor=#0066CC;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="1425" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step9Title" value="Visualization (React Frontend)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1410" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="step9Detail" value="React + Recharts → Interactive dashboards, charts, filters&#xa;Features: Real-time updates, responsive design, TanStack Query caching&#xa;Pages: Dashboard (trends), Skills Explorer (heatmaps), Company Intelligence (profiles)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1440" width="750" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="DeploymentArchitecture" name="3. Deployment (Azure)">
+    <mxGraphModel dx="1469" dy="873" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title3" value="&lt;font style=&quot;font-size: 28px;&quot;&gt;Deployment Architecture&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="179" y="40" width="800" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="azureCloud" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=4;dashed=1;dashPattern=8 8;" parent="1" vertex="1">
+          <mxGeometry x="80" y="190" width="970" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudTitle" value="&lt;font style=&quot;font-size: 21px;&quot;&gt;☁️ AZURE CLOUD INFRASTRUCTURE&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="365" y="205" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="arrowToFrontend" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;HTTPS&lt;/font&gt;" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;fontSize=12;fontStyle=1;exitX=0.234;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="72jl0ZHWYNIuLi0Dzlcx-3" edge="1">
+          <mxGeometry x="0.0445" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="310" y="181" as="sourcePoint" />
+            <mxPoint x="310" y="250" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="staticWebApps" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="120" y="250" width="380" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="staticWebAppsTitle" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;Azure Static Web Apps&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="170" y="260" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staticWebAppsURL" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;www.techjobinsights.me&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=#0066CC;fillColor=#E1F5FE;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="160" y="288" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="frontendDetails" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;Deployment:&lt;br&gt;- GitHub Actions CI/CD&lt;br&gt;- Auto-deploy on main push&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="146" y="316" width="325" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="arrowToBackend" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;REST API&lt;/font&gt;" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#FF6B35;fontSize=12;fontStyle=1;startArrow=classic;startFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="staticWebApps" target="appService" edge="1">
+          <mxGeometry x="0.0154" y="-19" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="510" y="350" as="sourcePoint" />
+            <mxPoint x="620" y="350" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="appService" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="630" y="250" width="380" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="appServiceTitle" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;Azure Web App Service&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="680" y="260" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="appServiceURL" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;techjobsinsights-api.azurewebsites.net&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=#FF6B35;fillColor=#FFF8E1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=12;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="670" y="285" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="arrowToDatabase" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;PostgreSQL&lt;br&gt;&lt;/font&gt;" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#00AA88;fontSize=12;fontStyle=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.531;entryY=-0.008;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="appService" target="supabase" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="820" y="460" as="sourcePoint" />
+            <mxPoint x="820" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="supabase" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="560" y="530" width="490" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="supabaseTitle" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;🗄️ SUPABASE (External Managed Service)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#00AA88;" parent="1" vertex="1">
+          <mxGeometry x="575" y="550" width="460" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="databaseDetails" value="&lt;div style=&quot;&quot;&gt;&lt;b style=&quot;background-color: transparent; color: light-dark(rgb(51, 51, 51), rgb(193, 193, 193));&quot;&gt;&lt;font style=&quot;font-size: 19px;&quot;&gt;PostgreSQL 15 Managed Database&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;font style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;font style=&quot;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(51, 51, 51), rgb(193, 193, 193));&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;Features:&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(51, 51, 51), rgb(193, 193, 193));&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;- Connection pooling&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(51, 51, 51), rgb(193, 193, 193));&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;- Automatic daily backups&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 15px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/font&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="575" y="587" width="450" height="113" as="geometry" />
+        </mxCell>
+        <mxCell id="githubActions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="80" y="460" width="460" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="githubActionsTitle" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;⚙️ GITHUB ACTIONS (Automation)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#9C27B0;" parent="1" vertex="1">
+          <mxGeometry x="110" y="470" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="120" y="510" width="380" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow1Title" value="&lt;font style=&quot;font-size: 16px; color: rgb(0, 0, 0);&quot;&gt;Workflow 1: Daily Data Collection&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#9C27B0;" parent="1" vertex="1">
+          <mxGeometry x="155" y="515" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow1Details" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;Schedule: Daily at 2 AM NZDT&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;Steps: Scrape → Process NLP → Check URLs&lt;/span&gt;&lt;/div&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="130" y="535" width="360" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="120" y="601" width="180" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow2Title" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Workflow 2: Frontend&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="120" y="611" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow2Details" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Trigger: Push to main&lt;br&gt;Build: npm run build&lt;br&gt;Deploy: Azure SWA&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="140" y="627" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF6B35;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="310" y="601" width="190" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow3Title" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Workflow 3: Backend&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="320" y="607" width="170" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow3Details" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Trigger: Push to main&lt;br&gt;Build: Docker image&lt;br&gt;Deploy: Azure App Svc&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="330" y="627" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="arrowGHToBackend" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Trigger API&lt;/font&gt;" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9C27B0;fontSize=10;fontStyle=1;dashed=1;dashPattern=4 4;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.007;entryY=0.952;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="githubActions" target="appService" edge="1">
+          <mxGeometry x="0.1328" y="3" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="510" y="590" as="sourcePoint" />
+            <mxPoint x="630" y="378" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legendBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="80" y="727" width="970" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legendTitle" value="&lt;font style=&quot;font-size: 17px;&quot;&gt;Legend:&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="734" width="60" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend1Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="140" y="759" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend1Text" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Frontend (React)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="165" y="757" width="135" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="290" y="759" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2Text" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Backend (FastAPI)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="315" y="757" width="145" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend3Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="450" y="759" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend3Text" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Database&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="475" y="757" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend4Box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="570" y="759" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend4Text" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;Automation&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="595" y="757" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="72jl0ZHWYNIuLi0Dzlcx-3" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-weight: 700;&quot;&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;🌐 Internet Users&lt;/font&gt;&lt;/span&gt;" style="whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;rounded=1;strokeWidth=3;arcSize=31;" parent="1" vertex="1">
+          <mxGeometry x="84.5" y="100" width="965.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="72jl0ZHWYNIuLi0Dzlcx-4" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;Docker Container:&lt;br&gt;- Linux App Service Plan (B1)&lt;br&gt;- Docker image from Azure CR&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="660" y="310" width="320" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="NLPLayers" name="4. NLP Three-Layer Method">
+    <mxGraphModel dx="1002" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title4" value="Three-Layer Hybrid Skill Extraction Method" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="284.5" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle4" value="Combining speed, accuracy, and precision for optimal skill extraction" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="284.5" y="60" width="600" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="120" y="120" width="280" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1Title" value="LAYER 1&#xa;Pattern Matching" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="160" y="135" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1Method" value="METHOD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="200" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1MethodDetail" value="Exact keyword matching with&#xa;pre-defined skill dictionary" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="140" y="220" width="240" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1Speed" value="SPEED" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="260" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1SpeedDetail" value="⚡ Fastest (~0.1ms per job)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="140" y="280" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1Confidence" value="CONFIDENCE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="310" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1ConfidenceDetail" value="Highest (0.9-1.0)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="140" y="330" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1Example" value="EXAMPLE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="360" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1ExampleBox" value="&quot;5+ years Python experience&quot;&#xa;↓&#xa;✅ Python (0.95)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0066CC;strokeWidth=2;fontSize=11;fontColor=#333333;align=center;" parent="1" vertex="1">
+          <mxGeometry x="140" y="385" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="445" y="120" width="280" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2Title" value="LAYER 2&#xa;NLP Extraction" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FF6B35;" parent="1" vertex="1">
+          <mxGeometry x="485" y="135" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2Method" value="METHOD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="465" y="200" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2MethodDetail" value="SpaCy NER + POS tagging&#xa;for technical terms" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="465" y="220" width="240" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2Speed" value="SPEED" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="465" y="260" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2SpeedDetail" value="🔄 Medium (~5-10ms per job)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="465" y="280" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2Confidence" value="CONFIDENCE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="465" y="310" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2ConfidenceDetail" value="Medium (0.6-0.9)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="465" y="330" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2Example" value="EXAMPLE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="465" y="360" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2ExampleBox" value="&quot;GraphQL API experience&quot;&#xa;↓&#xa;✅ GraphQL (0.75)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF6B35;strokeWidth=2;fontSize=11;fontColor=#333333;align=center;" parent="1" vertex="1">
+          <mxGeometry x="465" y="385" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="770" y="120" width="280" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3Title" value="LAYER 3&#xa;Context Validation" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#00AA88;" parent="1" vertex="1">
+          <mxGeometry x="810" y="135" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3Method" value="METHOD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="790" y="200" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3MethodDetail" value="Window-based context analysis&#xa;(±5 words) for validation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="790" y="220" width="240" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3Speed" value="SPEED" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="790" y="260" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3SpeedDetail" value="🐌 Slower (~2-5ms per skill)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="790" y="280" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3Confidence" value="CONFIDENCE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="790" y="310" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3ConfidenceDetail" value="Adjusted (-0.3 if suspicious)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="790" y="330" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3Example" value="EXAMPLE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="790" y="360" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3ExampleBox" value="&quot;Java coffee shop&quot;&#xa;↓&#xa;❌ Filtered out (0.2 after -0.3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00AA88;strokeWidth=2;fontSize=11;fontColor=#333333;align=center;" parent="1" vertex="1">
+          <mxGeometry x="790" y="385" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="flowArrow1" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="295" as="sourcePoint" />
+            <mxPoint x="445" y="295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flowArrow2" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#FF6B35;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="725" y="295" as="sourcePoint" />
+            <mxPoint x="770" y="295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="finalOutput" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="120" y="520" width="930" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="finalOutputTitle" value="FINAL OUTPUT" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#F57F17;" parent="1" vertex="1">
+          <mxGeometry x="485" y="530" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="finalOutputDetail" value="Only skills with confidence &gt; 0.5 are stored in database → Reduces false positives while maintaining recall&#xa;&#xa;Stored in jobs.extracted_skills JSONB:&#xa;{&quot;languages&quot;: [{&quot;name&quot;: &quot;Python&quot;, &quot;confidence&quot;: 0.95, &quot;method&quot;: &quot;pattern&quot;}, {...}], &quot;frameworks&quot;: [...], ...}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="140" y="565" width="890" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="metricsBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="120" y="680" width="930" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="metricsTitle" value="PERFORMANCE METRICS" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="440" y="690" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="metric1" value="Precision: 92%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0066CC;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="160" y="720" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="metric2" value="Recall: 87%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF6B35;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="370" y="720" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="metric3" value="F1-Score: 89.4%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#00AA88;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="580" y="720" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="metric4" value="Avg Time: 8ms/job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="790" y="720" width="180" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+
+
+
+
+
+
+
+
